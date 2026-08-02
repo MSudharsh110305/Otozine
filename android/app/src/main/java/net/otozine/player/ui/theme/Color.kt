@@ -2,6 +2,7 @@ package net.otozine.player.ui.theme
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 
 /**
  * Colour tokens, lifted verbatim from the design mockup.
@@ -134,7 +135,7 @@ val LightNeonColors = OtoColors(
 
 /** Warm pinks and paper. Softer than Paper, and the only palette with a hue. */
 val CherryBlossomColors = OtoColors(
-    page = Color(0xFFF6E8EC),
+    page = Color(0x00000000),
     surface = Color(0xFFFDF3F6),
     sunken = Color(0xFFEEDCE2),
     highlight = Color(0xF7FFFFFF),
@@ -151,27 +152,32 @@ val CherryBlossomColors = OtoColors(
 )
 
 /**
- * Frosted panels over a dim ground.
+ * Real glass: light, and genuinely transparent.
  *
- * Glass needs something behind it to refract, so the surfaces are translucent
- * and the page is deliberately not flat -- without depth underneath, a glass
- * panel is just a grey box with a bright top edge.
+ * The page is left fully transparent so the scene painted behind it shows
+ * through every panel -- that colour is the whole effect. The dark version this
+ * replaces was opaque charcoal with a bright edge, which is a description of
+ * glass rather than glass itself.
+ *
+ * Ink is near-black rather than the mid-grey that would look more delicate.
+ * Text sits over a moving field of pastels here, and only a very dark ink holds
+ * 4.5:1 against the lightest part of it.
  */
 val GlassColors = OtoColors(
-    page = Color(0xFF171A24),
-    surface = Color(0x2EFFFFFF),
-    sunken = Color(0x1F000000),
-    highlight = Color(0x59FFFFFF),
-    shadow = Color(0x8A000000),
-    ink = Color(0xFFF2F5FF),
-    ink2 = Color(0xFFB4BCD4),
-    ink3 = Color(0xFF7C8399),
-    teal = Color(0xFF63E6C8),
-    sky = Color(0xFF8FB8FF),
-    line = Color(0x3DFFFFFF),
-    isDark = true,
+    page = Color(0x00000000),
+    surface = Color(0x4DFFFFFF),
+    sunken = Color(0x24FFFFFF),
+    highlight = Color(0xB3FFFFFF),
+    shadow = Color(0x2E3A4A6B),
+    ink = Color(0xFF17203A),
+    ink2 = Color(0xFF4B5878),
+    ink3 = Color(0xFF7C89A6),
+    teal = Color(0xFF00897B),
+    sky = Color(0xFF4257C4),
+    line = Color(0x66FFFFFF),
+    isDark = false,
     finish = Finish.GLASS,
-    glow = Color(0xFF63E6C8),
+    glow = Color(0xFFFFFFFF),
 )
 
 /**
@@ -184,18 +190,32 @@ enum class OtoPalette(
     val label: String,
     val blurb: String,
     val colors: OtoColors,
+    /** What is painted behind the interface, if anything. */
+    val scene: Scene = Scene.NONE,
 ) {
     PAPER("Paper", "Warm off-white, soft shadows", PaperColors),
     INK("Ink", "The same, after dark", InkColors),
     DARK_NEO("Dark Neo", "True black, electric edges", DarkNeoColors),
     LIGHT_NEON("Light Neon", "Bright paper, saturated ink", LightNeonColors),
-    CHERRY("Cherry Blossom", "Warm pinks and paper", CherryBlossomColors),
-    GLASS("Glass", "Frosted panels, dim ground", GlassColors);
+    CHERRY("Cherry Blossom", "Falling petals", CherryBlossomColors, Scene.PETALS),
+    GLASS("Glass", "Clear panels over colour", GlassColors, Scene.GLASS_LIGHT);
 
     companion object {
         fun of(name: String?): OtoPalette? = entries.firstOrNull { it.name == name }
     }
 }
+
+/**
+ * A veil for covering the app behind a modal.
+ *
+ * Not `page`: themes that paint a scene leave the page transparent so the
+ * backdrop shows through, and a scrim built from it would vanish precisely
+ * where it is needed. Built from the ink's opposite instead, which every
+ * palette defines and which is always the right lightness to hide against.
+ */
+fun OtoColors.scrim(): Color =
+    if (isDark) Color(0xF2000000).compositeOver(surface)
+    else Color(0xF7FFFFFF).compositeOver(surface)
 
 /**
  * Tints for generated cover art.

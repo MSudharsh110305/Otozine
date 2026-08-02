@@ -44,6 +44,7 @@ import net.otozine.player.ui.components.VSpace
 import net.otozine.player.ui.components.subtitleLine
 import net.otozine.player.ui.theme.Depth
 import net.otozine.player.ui.theme.Oto
+import net.otozine.player.ui.theme.scrim
 import net.otozine.player.ui.theme.neu
 import kotlin.math.roundToInt
 
@@ -58,7 +59,7 @@ fun Sheet(
     Box(
         Modifier
             .fillMaxSize()
-            .background(Oto.colors.page.copy(alpha = 0.96f))
+            .background(Oto.colors.scrim())
             .clickable(onClick = onDismiss)
             .systemBarsPadding(),
         contentAlignment = Alignment.BottomCenter,

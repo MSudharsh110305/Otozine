@@ -17,6 +17,7 @@ import net.otozine.player.ui.Shell
 import net.otozine.player.ui.rememberPermissionGate
 import net.otozine.player.ui.theme.Oto
 import net.otozine.player.ui.theme.OtoPalette
+import net.otozine.player.ui.theme.ThemeScene
 import net.otozine.player.ui.theme.OtoZineTheme
 
 class MainActivity : ComponentActivity() {
@@ -45,6 +46,10 @@ private fun Root(viewModel: PlayerViewModel = viewModel()) {
 
     OtoZineTheme(darkTheme = dark, palette = OtoPalette.of(prefs.palette)) {
         Box(Modifier.fillMaxSize().background(Oto.colors.page)) {
+            // Behind everything, and behind the page fill: themes that paint a
+            // scene leave `page` transparent so it shows through. Themes that do
+            // not draw nothing here at all.
+            ThemeScene(OtoPalette.of(prefs.palette), Modifier.fillMaxSize())
             Shell(viewModel, requestAudio)
         }
     }

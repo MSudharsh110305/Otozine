@@ -31,6 +31,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import net.otozine.player.ui.theme.OtoPalette
 import net.otozine.player.ui.theme.pressable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.ui.graphics.Color
+import net.otozine.player.ui.theme.InkColors
+import net.otozine.player.ui.theme.PaperColors
+import net.otozine.player.ui.theme.Scene
 import androidx.compose.ui.unit.dp
 import net.otozine.player.PlayerViewModel
 import net.otozine.player.Prefs
@@ -68,20 +73,34 @@ fun MoreScreen(
 
         SectionHeader("Appearance")
         Group {
-            Row(
-                Modifier.fillMaxWidth().padding(14.dp),
-                horizontalArrangement = Arrangement.spacedBy(9.dp),
-            ) {
-                ThemeMode.entries.forEach { mode ->
-                    ThemeOption(
-                        label = when (mode) {
-                            ThemeMode.SYSTEM -> "SYSTEM"
-                            ThemeMode.LIGHT -> "LIGHT"
-                            ThemeMode.DARK -> "DARK"
-                        },
-                        selected = prefs.theme == mode,
-                        modifier = Modifier.weight(1f),
-                    ) { viewModel.setTheme(mode) }
+            Column(Modifier.padding(vertical = 12.dp)) {
+                Text(
+                    "Auto follows the system between Paper and Ink. Anything else " +
+                        "stays put.",
+                    style = Oto.type.body,
+                    color = Oto.colors.ink3,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+                VSpace(10.dp)
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    // Auto is one of the choices rather than a separate control,
+                    // because "follow the system" is a theme like any other --
+                    // splitting it out is what made the two sections disagree.
+                    item(key = "auto") {
+                        PaletteSwatch(
+                            palette = null,
+                            selected = prefs.palette == null,
+                        ) { viewModel.setPalette(null) }
+                    }
+                    items(OtoPalette.entries.toList(), key = { it.name }) { palette ->
+                        PaletteSwatch(
+                            palette = palette,
+                            selected = prefs.palette == palette.name,
+                        ) { viewModel.setPalette(palette.name) }
+                    }
                 }
             }
         }
@@ -110,35 +129,6 @@ fun MoreScreen(
                     style = Oto.type.micro,
                     color = Oto.colors.ink3,
                 )
-            }
-        }
-
-        SectionHeader("Themes")
-        Group {
-            Column(Modifier.padding(vertical = 12.dp)) {
-                Text(
-                    "A theme overrides light and dark. Picking system, light or " +
-                        "dark above clears it.",
-                    style = Oto.type.body,
-                    color = Oto.colors.ink3,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
-                VSpace(10.dp)
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 14.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    items(OtoPalette.entries.toList(), key = { it.name }) { palette ->
-                        PaletteSwatch(
-                            palette = palette,
-                            selected = prefs.palette == palette.name,
-                        ) {
-                            viewModel.setPalette(
-                                if (prefs.palette == palette.name) null else palette.name
-                            )
-                        }
-                    }
-                }
             }
         }
 
@@ -317,12 +307,17 @@ private fun Group(content: @Composable () -> Unit) {
  */
 @Composable
 private fun PaletteSwatch(
-    palette: OtoPalette,
+    palette: OtoPalette?,
     selected: Boolean,
     onClick: () -> Unit,
 ) {
     val interaction = remember { MutableInteractionSource() }
-    val c = palette.colors
+    // Auto shows the palette it would currently resolve to, so the swatch is
+    // never a blank square that explains nothing.
+    val c = palette?.colors
+        ?: if (isSystemInDarkTheme()) InkColors else PaperColors
+    val label = palette?.label ?: "Auto"
+    val blurb = palette?.blurb ?: "Follows the system"
 
     Column(
         Modifier
@@ -337,7 +332,15 @@ private fun PaletteSwatch(
                 .fillMaxWidth()
                 .height(62.dp)
                 .clip(RoundedCornerShape(14.dp))
-                .background(c.page)
+                .background(
+                    // Scene themes leave the page transparent, so preview the
+                    // colour their backdrop actually paints.
+                    when (palette?.scene) {
+                        Scene.PETALS -> Color(0xFFF8E9EE)
+                        Scene.GLASS_LIGHT -> Color(0xFFF2F0FF)
+                        else -> c.page
+                    }
+                )
                 .border(
                     width = if (selected) 2.dp else 1.dp,
                     color = if (selected) Oto.colors.teal else Oto.colors.line,
@@ -371,14 +374,14 @@ private fun PaletteSwatch(
         }
         VSpace(6.dp)
         Text(
-            palette.label,
+            label,
             style = Oto.type.micro,
             color = if (selected) Oto.colors.teal else Oto.colors.ink,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
         Text(
-            palette.blurb,
+            blurb,
             style = Oto.type.micro,
             color = Oto.colors.ink3,
             maxLines = 2,

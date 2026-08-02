@@ -25,6 +25,7 @@ import net.otozine.player.ui.components.NeuCard
 import net.otozine.player.ui.components.VSpace
 import net.otozine.player.ui.theme.Depth
 import net.otozine.player.ui.theme.Oto
+import net.otozine.player.ui.theme.scrim
 import net.otozine.player.ui.theme.neu
 
 private fun DriveTransfer.Progress.heading(): String = when (kind) {
@@ -103,7 +104,7 @@ fun TransferOverlay(
         if (progress.total > 0) progress.done.toFloat() / progress.total else 0f
 
     Box(
-        Modifier.fillMaxSize().background(colors.page.copy(alpha = 0.97f)),
+        Modifier.fillMaxSize().background(colors.scrim()),
         contentAlignment = Alignment.Center,
     ) {
         NeuCard(Modifier.fillMaxWidth().padding(26.dp), radius = 22.dp) {
