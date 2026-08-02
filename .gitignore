@@ -1,0 +1,55 @@
+# --- Android ---
+android/local.properties      # machine-specific SDK path; ANDROID_HOME is used instead
+android/.gradle/
+android/build/
+android/app/build/
+android/captures/
+android/.idea/
+*.apk
+*.aab
+*.keystore
+!debug.keystore
+
+# --- Librarian ---
+librarian/.venv/
+librarian/build/
+librarian/dist/
+librarian/*.egg-info/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Editors / OS ---
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Not ours to publish ---
+# Your music, and a vendor design export. Neither is needed to build the app,
+# and the audio is copyrighted material that has no business in a public repo.
+songs/
+Otozine music player design/
+
+# --- Signing key ---
+# Self-signed and it protects nothing, but a private key in a public repo is
+# still a private key in a public repo. The build falls back to an unsigned
+# release when it is absent, so a fresh clone still compiles.
+android/keystore/
+*.jks
+
+# --- Never commit library data ---
+# The drive is the source of truth; none of it belongs in git.
+#
+# Anchored to the repository root. Unanchored, this matches any directory named
+# "otozine" at any depth -- and because git on Windows ignores case by default,
+# that silently excluded every source file in net.otozine.player and the whole
+# librarian/otozine package. The staged tree had no code in it at all.
+/OtoZine/
+*.db
+*.db-wal
+*.db-shm
+vectors.bin
+prompts.bin
