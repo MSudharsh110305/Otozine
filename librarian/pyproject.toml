@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "otozine-librarian"
+version = "0.1.0"
+description = "Ingest pipeline for the OTOZINE portable music library"
+requires-python = ">=3.11"
+
+dependencies = [
+    "numpy>=1.26",
+    "blake3>=0.4",
+    "requests>=2.31",
+    "mutagen>=1.47",
+    "librosa>=0.10",       # DSP: BPM, key, spectral features, mel-spectrograms
+    "soundfile>=0.12",
+    "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+# Acoustic fingerprinting. Needs the native `fpcalc` binary from Chromaprint,
+# which the CLI can fetch via `otozine doctor --fix`.
+fingerprint = ["pyacoustid>=1.3"]
+
+# Stage 6-8: CLAP embeddings, Essentia ONNX heads, VoxLingua language id.
+# NOTE: we deliberately do NOT depend on the `essentia` package -- it has no
+# Windows wheels. We run Essentia's exported .onnx models through onnxruntime
+# and build the mel-spectrogram input ourselves in numpy/librosa.
+ml = ["onnxruntime>=1.17"]
+
+dev = ["pytest>=8.0", "pytest-cov>=4.1"]
+
+[project.scripts]
+otozine = "otozine.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["otozine*"]
+
+[tool.setuptools.package-data]
+otozine = ["schema.sql", "data/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
