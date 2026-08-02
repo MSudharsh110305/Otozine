@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compose supplies the real theme; this only needs to exist for the
+         manifest and to set the pre-Compose window background so launch does
+         not flash white. -->
+    <style name="Theme.OtoZine" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/paper</item>
+        <item name="android:statusBarColor">@color/paper</item>
+        <item name="android:navigationBarColor">@color/paper</item>
+    </style>
+</resources>

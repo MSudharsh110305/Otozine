@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Placeholder mark: a chunky ink glyph on the acid background.
+     Phase 4 replaces this with the real hand-drawn logo. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Note head -->
+    <path
+        android:fillColor="#14110F"
+        android:pathData="M38,68m-11,0a11,11 0 1,0 22,0a11,11 0 1,0 -22,0" />
+    <!-- Stem -->
+    <path
+        android:fillColor="#14110F"
+        android:pathData="M45,68 L45,32 L52,32 L52,68 Z" />
+    <!-- Flag -->
+    <path
+        android:fillColor="#FF3D7F"
+        android:pathData="M52,32 L52,46 C62,42 72,44 76,34 C72,28 62,30 52,32 Z" />
+</vector>
