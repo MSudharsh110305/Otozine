@@ -109,37 +109,13 @@ val DarkNeoColors = OtoColors(
     glow = Color(0xFF4DE8E0),
 )
 
-/**
- * Bright paper with saturated ink.
- *
- * Neon on white cannot glow -- there is nothing for light to be brighter than
- * -- so the accents are carried by saturation and weight instead. The surfaces
- * stay soft; only the accent colours are turned up.
- */
-val LightNeonColors = OtoColors(
-    page = Color(0xFFF2F1FA),
-    surface = Color(0xFFFBFAFF),
-    sunken = Color(0xFFE7E6F3),
-    highlight = Color(0xFFFFFFFF),
-    shadow = Color(0x38584B8C),
-    ink = Color(0xFF1B1830),
-    ink2 = Color(0xFF6E6893),
-    ink3 = Color(0xFF9A95B8),
-    teal = Color(0xFF00B3A4),
-    sky = Color(0xFF7A3CFF),
-    line = Color(0x2E584B8C),
-    isDark = false,
-    finish = Finish.SOFT,
-    glow = Color(0xFF7A3CFF),
-)
-
 /** Warm pinks and paper. Softer than Paper, and the only palette with a hue. */
 val CherryBlossomColors = OtoColors(
     page = Color(0x00000000),
-    surface = Color(0xFFFDF3F6),
-    sunken = Color(0xFFEEDCE2),
-    highlight = Color(0xF7FFFFFF),
-    shadow = Color(0x47B07A8E),
+    surface = Color(0xF7FFF9FB),
+    sunken = Color(0xF0EBD8DF),
+    highlight = Color(0xFFFFFFFF),
+    shadow = Color(0x3DA87288),
     ink = Color(0xFF4A3540),
     ink2 = Color(0xFF97798A),
     ink3 = Color(0xFFBFA3B2),
@@ -165,16 +141,16 @@ val CherryBlossomColors = OtoColors(
  */
 val GlassColors = OtoColors(
     page = Color(0x00000000),
-    surface = Color(0x4DFFFFFF),
-    sunken = Color(0x24FFFFFF),
-    highlight = Color(0xB3FFFFFF),
-    shadow = Color(0x2E3A4A6B),
+    surface = Color(0x8CFFFFFF),
+    sunken = Color(0x3D8FA0C4),
+    highlight = Color(0xF2FFFFFF),
+    shadow = Color(0x543A4A6B),
     ink = Color(0xFF17203A),
     ink2 = Color(0xFF4B5878),
     ink3 = Color(0xFF7C89A6),
     teal = Color(0xFF00897B),
     sky = Color(0xFF4257C4),
-    line = Color(0x66FFFFFF),
+    line = Color(0x99FFFFFF),
     isDark = false,
     finish = Finish.GLASS,
     glow = Color(0xFFFFFFFF),
@@ -196,7 +172,6 @@ enum class OtoPalette(
     PAPER("Paper", "Warm off-white, soft shadows", PaperColors),
     INK("Ink", "The same, after dark", InkColors),
     DARK_NEO("Dark Neo", "True black, electric edges", DarkNeoColors),
-    LIGHT_NEON("Light Neon", "Bright paper, saturated ink", LightNeonColors),
     CHERRY("Cherry Blossom", "Falling petals", CherryBlossomColors, Scene.PETALS),
     GLASS("Glass", "Clear panels over colour", GlassColors, Scene.GLASS_LIGHT);
 

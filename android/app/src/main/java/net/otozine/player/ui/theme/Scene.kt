@@ -68,6 +68,30 @@ private fun frameClock(): Float {
     return time
 }
 
+/**
+ * An opaque backing for anything drawn over the whole screen.
+ *
+ * Scene themes leave `page` transparent so the backdrop shows through panels --
+ * which is right for the app's own background and wrong for every layer stacked
+ * on top of it. Now Playing filled itself with a transparent colour and let the
+ * screen beneath show through, so two interfaces were legible at once and back
+ * navigation looked broken when it was not.
+ *
+ * Layers therefore paint the scene again rather than a flat colour: opaque, and
+ * still the theme you chose.
+ */
+@Composable
+fun SceneSurface(modifier: Modifier = Modifier) {
+    val palette = LocalOtoPalette.current
+    val colors = LocalOtoColors.current
+    // Flat themes have an opaque page already; scene themes repaint the scene.
+    if ((palette?.scene ?: Scene.NONE) == Scene.NONE) {
+        Canvas(modifier.fillMaxSize()) { drawRect(colors.page) }
+    } else {
+        ThemeScene(palette, modifier)
+    }
+}
+
 @Composable
 fun ThemeScene(palette: OtoPalette?, modifier: Modifier = Modifier) {
     when (palette?.scene ?: Scene.NONE) {
@@ -104,7 +128,7 @@ private fun GlassBackdrop(modifier: Modifier = Modifier) {
         // as a rendering fault rather than as depth.
         drawCircle(
             Brush.radialGradient(
-                listOf(Color(0x669BC4FF), Color(0x009BC4FF)),
+                listOf(Color(0xA37AB0FF), Color(0x007AB0FF)),
                 center = Offset(size.width * 0.18f, size.height * 0.16f),
                 radius = size.minDimension * 0.85f,
             ),
@@ -113,7 +137,7 @@ private fun GlassBackdrop(modifier: Modifier = Modifier) {
         )
         drawCircle(
             Brush.radialGradient(
-                listOf(Color(0x5CD9A8FF), Color(0x00D9A8FF)),
+                listOf(Color(0x99C98CFF), Color(0x00C98CFF)),
                 center = Offset(size.width * 0.9f, size.height * 0.34f),
                 radius = size.minDimension * 0.8f,
             ),
@@ -122,7 +146,7 @@ private fun GlassBackdrop(modifier: Modifier = Modifier) {
         )
         drawCircle(
             Brush.radialGradient(
-                listOf(Color(0x5C7FE8D2), Color(0x007FE8D2)),
+                listOf(Color(0x8F5FD9C4), Color(0x005FD9C4)),
                 center = Offset(size.width * 0.35f, size.height * 0.92f),
                 radius = size.minDimension * 0.9f,
             ),
@@ -144,10 +168,18 @@ private class Petal(random: Random) {
     val tilt = random.nextFloat() * (2 * PI).toFloat()
     val startY = random.nextFloat()
 
+    val tone = random.nextInt(3)
+
     val scale get() = 0.45f + depth * 0.85f
     val speed get() = 0.020f + depth * 0.055f
     val alpha get() = 0.28f + depth * 0.45f
 }
+
+private val PetalTones = listOf(
+    Color(0xFFF3C2D2),   // pale edge
+    Color(0xFFE79BB4),   // mid
+    Color(0xFFD97E9E),   // deeper heart
+)
 
 /**
  * Cherry petals falling, with depth.
@@ -177,6 +209,16 @@ private fun PetalBackdrop(modifier: Modifier = Modifier) {
             )
         )
 
+        drawCircle(
+            Brush.radialGradient(
+                listOf(Color(0x59FFFFFF), Color(0x00FFFFFF)),
+                center = Offset(size.width * 0.72f, -size.height * 0.05f),
+                radius = size.minDimension * 0.95f,
+            ),
+            radius = size.minDimension * 0.95f,
+            center = Offset(size.width * 0.72f, -size.height * 0.05f),
+        )
+
         petals.forEach { petal ->
             // Wrap in [0,1) so a petal leaving the bottom re-enters at the top
             // without a seam, rather than the field slowly emptying.
@@ -188,7 +230,7 @@ private fun PetalBackdrop(modifier: Modifier = Modifier) {
             val length = (13.dp.toPx()) * petal.scale
             translate(x, y) {
                 rotateRad(petal.tilt + time * petal.spin, pivot = Offset.Zero) {
-                    drawPetal(length, Color(0xFFE79BB4).copy(alpha = petal.alpha))
+                    drawPetal(length, PetalTones[petal.tone].copy(alpha = petal.alpha))
                 }
             }
         }

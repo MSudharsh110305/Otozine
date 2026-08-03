@@ -40,6 +40,7 @@ import net.otozine.player.ui.components.NeuPill
 import net.otozine.player.ui.components.subtitleLine
 import net.otozine.player.ui.theme.Depth
 import net.otozine.player.ui.theme.Oto
+import net.otozine.player.ui.theme.SceneSurface
 import net.otozine.player.ui.theme.neu
 
 /**
@@ -183,7 +184,9 @@ fun Shell(viewModel: PlayerViewModel, requestAudio: () -> Unit = {}) {
         }
 
         if (mapOpen) {
-            Box(Modifier.fillMaxSize().background(colors.page).systemBarsPadding()) {
+            Box(Modifier.fillMaxSize()) {
+                SceneSurface(Modifier.fillMaxSize())
+                Box(Modifier.fillMaxSize().systemBarsPadding()) {
                 Column {
                     Row(
                         Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 12.dp),
@@ -199,6 +202,7 @@ fun Shell(viewModel: PlayerViewModel, requestAudio: () -> Unit = {}) {
                         )
                     }
                     MapScreen(state, viewModel)
+                }
                 }
             }
         }

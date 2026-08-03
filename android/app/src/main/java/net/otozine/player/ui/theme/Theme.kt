@@ -19,6 +19,15 @@ import androidx.core.view.WindowCompat
 val LocalOtoColors = staticCompositionLocalOf { PaperColors }
 val LocalOtoType = staticCompositionLocalOf { Typography }
 
+/**
+ * The chosen palette, or null when following the system.
+ *
+ * Needed because a scene theme leaves `page` transparent, so anything drawn
+ * full-screen has to paint the backdrop itself or the screen underneath shows
+ * straight through it.
+ */
+val LocalOtoPalette = staticCompositionLocalOf<OtoPalette?> { null }
+
 /** Shorthand: `Oto.colors.ink`, `Oto.type.label`. */
 object Oto {
     val colors: OtoColors
@@ -99,6 +108,7 @@ fun OtoZineTheme(
     CompositionLocalProvider(
         LocalOtoColors provides colors,
         LocalOtoType provides Typography,
+        LocalOtoPalette provides palette,
     ) {
         MaterialTheme(colorScheme = material, content = content)
     }

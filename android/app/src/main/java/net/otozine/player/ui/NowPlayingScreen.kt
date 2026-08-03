@@ -47,6 +47,7 @@ import net.otozine.player.ui.components.formatDuration
 import net.otozine.player.ui.components.subtitleLine
 import net.otozine.player.ui.theme.Depth
 import net.otozine.player.ui.theme.Oto
+import net.otozine.player.ui.theme.SceneSurface
 import net.otozine.player.ui.theme.neu
 
 @Composable
@@ -71,10 +72,14 @@ fun NowPlayingScreen(
     val colors = Oto.colors
     val artPx = with(LocalDensity.current) { 300.dp.roundToPx() }
 
+    // Opaque backing, drawn before anything else. Filling with `page` was enough
+    // until scene themes made it transparent, at which point the screen behind
+    // showed through this one and both were readable at once.
+    Box(Modifier.fillMaxSize()) {
+    SceneSurface(Modifier.fillMaxSize())
     Column(
         Modifier
             .fillMaxSize()
-            .background(colors.page)
             .systemBarsPadding()
             .padding(horizontal = 22.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -256,6 +261,7 @@ fun NowPlayingScreen(
             FooterAction("MOOD", onMood)
             FooterAction("TIMER", onTimer)
         }
+    }
     }
 }
 
