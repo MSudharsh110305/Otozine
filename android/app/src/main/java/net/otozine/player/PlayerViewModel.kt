@@ -104,11 +104,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
         val playableCount: Int get() {
             val seen = HashSet<String>()
             var n = 0
-            for (track in tracks) {
-                val key = track.displayTitle.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim() +
-                    "|" + (track.durationMs / 2000)
-                if (seen.add(key)) n++
-            }
+            for (track in tracks) if (seen.add(track.dedupeKey)) n++
             return n
         }
 
@@ -172,8 +168,6 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     // ------------------------------------------------------------- settings
-
-    fun setTheme(mode: ThemeMode) = settings.setTheme(mode)
 
     fun setSeekOnDoubleTap(enabled: Boolean) = settings.setSeekOnDoubleTap(enabled)
 

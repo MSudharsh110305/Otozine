@@ -358,56 +358,6 @@ private fun MoodTile(
 }
 
 @Composable
-private fun GroupedList(
-    groups: List<Pair<String, List<Track>>>,
-    open: String?,
-    onOpen: (String) -> Unit,
-    state: PlayerViewModel.UiState,
-    viewModel: PlayerViewModel,
-    onTrackMenu: (Track) -> Unit,
-) {
-    if (groups.isEmpty()) {
-        Column(Modifier.padding(26.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("NO LABELS YET", style = Oto.type.label, color = Oto.colors.ink3)
-            Text(
-                "Mood labels come from the Librarian, or from tagging tracks " +
-                    "yourself under Now Playing.",
-                style = Oto.type.body,
-                color = Oto.colors.ink2,
-            )
-        }
-        return
-    }
-
-    LazyColumn(Modifier.fillMaxSize()) {
-        groups.forEach { (label, tracks) ->
-            item(key = "h-$label") {
-                GroupHeader(
-                    label = label,
-                    count = tracks.size,
-                    expanded = open == label,
-                    onClick = { onOpen(label) },
-                    onPlay = { viewModel.playFrom(tracks.firstOrNull()) },
-                )
-            }
-            if (open == label) {
-                items(tracks, key = { "$label-${it.id}" }) { track ->
-                    TrackRow(
-                        track = track,
-                        isCurrent = track.id.toString() == state.nowPlayingId,
-                        artPath = viewModel.artPathFor(track),
-                        moods = state.moodsByTrack[track.id].orEmpty(),
-                        onClick = { viewModel.playFrom(track) },
-                        onLongPress = { onTrackMenu(track) },
-                    )
-                }
-            }
-        }
-        item { VSpace(14.dp) }
-    }
-}
-
-@Composable
 private fun GroupHeader(
     label: String,
     count: Int,
@@ -510,12 +460,7 @@ fun List<Track>.matching(query: String): List<Track> {
     // -- identical rows, differing only by which copy happened to have artwork.
     val seen = HashSet<String>()
     return filter { it.displayTitle.lowercase().contains(needle) }
-        .filter {
-            seen.add(
-                it.displayTitle.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim() +
-                    "|" + (it.durationMs / 2000)
-            )
-        }
+        .filter { seen.add(it.dedupeKey) }
 }
 
 @Composable

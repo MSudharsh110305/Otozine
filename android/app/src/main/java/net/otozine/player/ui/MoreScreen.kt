@@ -498,11 +498,3 @@ private fun ToggleRow(
     }
 }
 
-@Composable
-private fun Stat(label: String, value: String) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, style = Oto.type.body, color = Oto.colors.ink2)
-        Box(Modifier.weight(1f))
-        Text(value, style = Oto.type.data, color = Oto.colors.ink)
-    }
-}

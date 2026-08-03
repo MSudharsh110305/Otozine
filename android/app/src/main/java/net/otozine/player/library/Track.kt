@@ -52,4 +52,19 @@ data class Track(
      * it rather than showing nothing.
      */
     val displayArtist: String get() = artist ?: composer ?: "Unknown artist"
+
+    /**
+     * Identity for "is this the same song as that one".
+     *
+     * Title and length rather than content hash, because the two sides hash
+     * differently -- the Librarian uses blake3 on a PC and the phone SHA-256 --
+     * so the same audio on the drive and on the phone never matches by hash.
+     *
+     * This rule was written out separately in the header count, the search
+     * results and the transfer's duplicate check, and the count and the sound
+     * map each shipped with it missing. One definition, used everywhere.
+     */
+    val dedupeKey: String
+        get() = displayTitle.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim() +
+            "|" + (durationMs / 2000)
 }

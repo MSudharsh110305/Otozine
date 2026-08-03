@@ -179,12 +179,6 @@ fun DataStrip(values: List<String>, modifier: Modifier = Modifier) {
     )
 }
 
-/** Hairline divider. */
-@Composable
-fun Hairline(modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().height(1.dp).background(Oto.colors.line))
-}
-
 @Composable
 fun VSpace(height: Dp) = Spacer(Modifier.height(height))
 
