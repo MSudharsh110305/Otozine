@@ -285,6 +285,65 @@ class AntiRepeatTest {
     }
 
     @Test
+    fun `the queue spreads instead of walking its nearest neighbours`() {
+        // Every track is picked for similarity to the target, so without a
+        // diversity term each pick makes the next more similar still and a long
+        // queue converges by construction. This is the layer the engine's own
+        // header claimed for months before it existed.
+        //
+        // A continuum rather than two distant clusters: asking a seeded queue to
+        // jump to the far end of the library would be asking it to ignore the
+        // seed, which is not what diversity is for. What it should do is range
+        // across the neighbourhood rather than serve the thirty nearest tracks.
+        val tracks = (1..160).map { i ->
+            val position = i / 160f
+            Track(
+                id = i.toLong(), contentHash = "hash$i", title = "Song $i",
+                artist = null, composer = null, album = null, year = null, language = null,
+                durationMs = 200_000L, opusPath = "audio/opus/$i.opus", artPath = null,
+                bpm = 70f + position * 100f,
+                keyCamelot = if (i % 2 == 0) "8A" else "9B",
+                energy = position,
+                danceability = position,
+                replayGainDb = 0f, introEndMs = 0L, outroStartMs = 0L, hookStartMs = 0L,
+            )
+        }
+
+        val seed = tracks[16]              // energy ~0.10
+        val queue = QueueEngine(tracks, PlayHistory.Snapshot(), seed = 3L)
+            .build(seedTrack = seed, size = sessionLength, adventure = 0.5f)
+
+        val energies = queue.map { it.track.energy }
+        val mean = energies.average().toFloat()
+        val spread = kotlin.math.sqrt(
+            energies.map { (it - mean) * (it - mean) }.average()
+        ).toFloat()
+
+        // Compared against what the engine would do with no diversity at all:
+        // the thirty tracks closest to the seed. Measuring that here rather than
+        // hard-coding a threshold keeps the test honest -- a fixed number can
+        // always be lowered until it passes, a baseline cannot.
+        val nearest = tracks
+            .sortedBy { kotlin.math.abs(it.energy - seed.energy) }
+            .take(sessionLength)
+            .map { it.energy }
+        val nearestMean = nearest.average().toFloat()
+        val nearestSpread = kotlin.math.sqrt(
+            nearest.map { (it - nearestMean) * (it - nearestMean) }.average()
+        ).toFloat()
+
+        println(
+            "queue spread: sd %.3f over %.2f..%.2f | nearest-neighbour baseline sd %.3f"
+                .format(spread, energies.min(), energies.max(), nearestSpread)
+        )
+        assertTrue(
+            "the queue is no wider than its nearest neighbours: %.3f against %.3f"
+                .format(spread, nearestSpread),
+            spread > nearestSpread * 1.4f,
+        )
+    }
+
+    @Test
     fun `sessions differ from one another`() {
         val tracks = library()
         val first = QueueEngine(tracks, PlayHistory.Snapshot(), seed = 1L)

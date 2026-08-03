@@ -440,6 +440,81 @@ class PlayHistory(private val context: Context) {
         }
     }
 
+    /** One finished listen, as the skip model needs it. */
+    data class Outcome(
+        val trackId: Long,
+        val skipped: Boolean,
+        val hour: Int,
+        val dayOfWeek: Int,
+        val output: String,
+    )
+
+    /**
+     * Every recorded listen, oldest first.
+     *
+     * Ordered because the model is fitted by passing over them in sequence, and
+     * later evidence should carry more weight than the first thing you ever
+     * played.
+     */
+    fun outcomes(limit: Int = 20_000): List<Outcome> {
+        val database = open() ?: return emptyList()
+        val out = ArrayList<Outcome>()
+        try {
+            database.rawQuery(
+                "SELECT track_id, outcome, ctx_hour, ctx_dow, ctx_output FROM play_events " +
+                    "ORDER BY event_id LIMIT ?",
+                arrayOf(limit.toString()),
+            ).use { c ->
+                while (c.moveToNext()) {
+                    out += Outcome(
+                        trackId = c.getLong(0),
+                        skipped = c.getString(1) == "skipped",
+                        hour = c.getInt(2),
+                        dayOfWeek = c.getInt(3),
+                        output = c.getString(4) ?: "",
+                    )
+                }
+            }
+        } catch (e: SQLiteException) {
+            Log.w(TAG, "could not read outcomes", e)
+        }
+        return out
+    }
+
+    /** Model weights, kept beside the events they were fitted from. */
+    fun saveWeights(key: String, weights: FloatArray) {
+        val database = open() ?: return
+        try {
+            database.execSQL(
+                "CREATE TABLE IF NOT EXISTS model_state (key TEXT PRIMARY KEY, value TEXT)"
+            )
+            database.execSQL(
+                "INSERT OR REPLACE INTO model_state (key, value) VALUES (?,?)",
+                arrayOf<Any?>(key, weights.joinToString(",")),
+            )
+        } catch (e: SQLiteException) {
+            Log.w(TAG, "could not save model weights", e)
+        }
+    }
+
+    fun loadWeights(key: String, size: Int): FloatArray? {
+        val database = open() ?: return null
+        return try {
+            database.execSQL(
+                "CREATE TABLE IF NOT EXISTS model_state (key TEXT PRIMARY KEY, value TEXT)"
+            )
+            database.rawQuery(
+                "SELECT value FROM model_state WHERE key = ?", arrayOf(key),
+            ).use { c ->
+                if (!c.moveToFirst()) return null
+                val parts = c.getString(0).split(",").mapNotNull { it.toFloatOrNull() }
+                if (parts.size == size) parts.toFloatArray() else null
+            }
+        } catch (e: SQLiteException) {
+            null
+        }
+    }
+
     // ---------------------------------------------- analysis of phone music
 
     /** What the phone measured about one of its own tracks. */

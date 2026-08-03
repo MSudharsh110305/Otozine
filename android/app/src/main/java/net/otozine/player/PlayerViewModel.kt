@@ -32,6 +32,8 @@ import net.otozine.player.online.SubsonicClient
 import net.otozine.player.online.isRemote
 import net.otozine.player.online.remoteId
 import net.otozine.player.queue.Features
+import net.otozine.player.queue.SkipModel
+import android.util.Log
 import net.otozine.player.queue.QueueEngine
 import java.util.UUID
 
@@ -114,6 +116,15 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     private var openStartPosition: Long = 0
     private var previousTrackId: Long? = null
     private var deviceMoods: Map<Long, Set<String>> = emptyMap()
+
+    /**
+     * Refitted on load rather than updated per event.
+     *
+     * Training over a few thousand rows takes single-digit milliseconds, so
+     * there is nothing to gain from incremental updates and a full refit cannot
+     * drift out of step with the history it claims to describe.
+     */
+    private val skipModel = SkipModel()
     private var analysisJob: kotlinx.coroutines.Job? = null
     private var transferJob: kotlinx.coroutines.Job? = null
 
@@ -497,9 +508,27 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
                 playedTrackIds = snapshot.lastPlayedAt.keys,
                 pendingSync = pending,
             )
+            trainSkipModel(tracks)
             if (settings.state.value.includeDeviceAudio) scanDevice()
             if (settings.state.value.serverConfigured) loadRemote()
             refreshDriveState()
+        }
+    }
+
+    /** Fit the skip model from recorded listens, and remember the result. */
+    private suspend fun trainSkipModel(library: List<Track>) {
+        withContext(Dispatchers.IO) {
+            val byId = library.associateBy { it.id }
+            val used = skipModel.train(history.outcomes(), byId::get)
+            if (skipModel.trained) {
+                history.saveWeights(SkipModel.KEY, skipModel.exportWeights())
+                Log.i("OtoZineQueue", "skip model fitted from $used listens")
+            } else {
+                // Not enough history yet. Fall back to whatever was learned on a
+                // previous run rather than starting blind every launch.
+                history.loadWeights(SkipModel.KEY, SkipModel.FEATURES)
+                    ?.let { skipModel.importWeights(it) }
+            }
         }
     }
 
@@ -693,7 +722,10 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
 
             val snapshot = withContext(Dispatchers.IO) { history.snapshot() }
             val entries = withContext(Dispatchers.Default) {
-                QueueEngine(pool, snapshot, moodMap()).build(
+                QueueEngine(
+                    pool, snapshot, moodMap(),
+                    skipModel = skipModel, output = _state.value.output,
+                ).build(
                     seedTrack = seed,
                     size = size.coerceAtMost(pool.size),
                     adventure = current.adventure,
@@ -853,7 +885,10 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
 
             val snapshot = withContext(Dispatchers.IO) { history.snapshot() }
             val entries = withContext(Dispatchers.Default) {
-                QueueEngine(pool, snapshot, moodMap()).build(
+                QueueEngine(
+                    pool, snapshot, moodMap(),
+                    skipModel = skipModel, output = _state.value.output,
+                ).build(
                     seedTrack = playing,
                     size = 40.coerceAtMost(pool.size),
                     adventure = current.adventure,

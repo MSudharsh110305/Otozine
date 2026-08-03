@@ -22,8 +22,8 @@ import kotlin.random.Random
  *  3. **Transition blocking** -- any (A -> B) pair served recently is penalised,
  *     so the same path is never walked twice. This is the layer that addresses
  *     "same pattern of shuffles".
- *  4. **Diversity** -- greedy MMR selection, so the queue spans the feature
- *     space instead of clustering on one vibe.
+ *  4. **Diversity** -- greedy MMR against the recent picks, so the queue spans
+ *     the feature space instead of clustering on one vibe.
  *  5. **Sequencing** -- among near-equal candidates, prefer a harmonically
  *     compatible key and a small tempo step, so transitions feel deliberate.
  *
@@ -40,6 +40,11 @@ class QueueEngine(
      */
     private val moodTags: Map<Long, Set<String>> = emptyMap(),
     seed: Long = System.currentTimeMillis(),
+    /** Fitted from your own listening; sits idle until there is enough of it. */
+    private val skipModel: SkipModel? = null,
+    /** Named `clock` because `now` already means unix seconds in here. */
+    private val clock: java.util.Calendar = java.util.Calendar.getInstance(),
+    private val output: String = "",
 ) {
 
     private val random = Random(seed)
@@ -90,7 +95,9 @@ class QueueEngine(
         var previous: Track? = seedTrack
 
         repeat(size) {
-            val next = pickNext(pool, target, taken, previous, now, adventure, targetMoods)
+            val next = pickNext(
+                pool, target, taken, chosen, previous, now, adventure, targetMoods,
+            )
                 ?: return@repeat
             chosen.add(next)
             taken.add(next.track.id)
@@ -103,6 +110,7 @@ class QueueEngine(
         pool: List<Track>,
         target: FloatArray,
         taken: Set<Long>,
+        chosen: List<Entry>,
         previous: Track?,
         now: Long,
         adventure: Float,
@@ -183,6 +191,50 @@ class QueueEngine(
                 score *= (1f + 0.6f * affinity * (1f - adventure)).coerceAtLeast(0.2f)
                 if (affinity > 0.5f && plays >= 3) {
                     reasons += Reason("you play this a lot", 0.7f * (1f - adventure))
+                }
+            }
+
+            // --- diversity: do not stack the queue on one vibe --------------
+            //
+            // Promised in this file's own header and never actually written:
+            // `taken` only stopped a track appearing twice, which is not the
+            // same as spanning the library. Without this, picking each track for
+            // its similarity to the target makes every one of them similar to
+            // all the others, and a thirty-track queue converges on a single
+            // mood by construction.
+            //
+            // Greedy MMR: penalise a candidate by how close it already is to
+            // what has been chosen. Only the recent picks count -- the queue
+            // should be free to come back around later, and comparing against
+            // all thirty would flatten the arc rather than vary it.
+            if (chosen.isNotEmpty()) {
+                var closest = 0f
+                for (entry in chosen.takeLast(6)) {
+                    val other = vectors[entry.track.id] ?: continue
+                    val near = Features.similarity(vector, other)
+                    if (near > closest) closest = near
+                }
+                // Scaled by adventure: at the comfort end a consistent run is
+                // the point, at the adventure end variety is.
+                score *= 1f - (0.45f * adventure + 0.15f) * closest.coerceIn(0f, 1f)
+            }
+
+            // --- learned skip risk -----------------------------------------
+            //
+            // What the engine could not see before: not whether you like a
+            // track, but whether you skip it *here* -- this hour, on these
+            // headphones. Returns 0.5 and changes nothing until there is enough
+            // history to fit.
+            skipModel?.let { model ->
+                if (model.trained) {
+                    val risk = model.predict(
+                        track,
+                        clock.get(java.util.Calendar.HOUR_OF_DAY),
+                        (clock.get(java.util.Calendar.DAY_OF_WEEK) + 5) % 7,
+                        output,
+                    )
+                    score *= (1f - 0.7f * (risk - 0.5f).coerceIn(-0.5f, 0.5f))
+                    if (risk < 0.25f) reasons += Reason("you stay with this one", 0.6f)
                 }
             }
 
