@@ -1071,22 +1071,20 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /**
-     * Move a track to immediately after the one playing.
+     * Move a track within the queue.
      *
-     * The "play next" every music app has, and the reason a queue is worth
-     * showing at all: seeing what is coming is only useful if you can change it.
+     * The controller's playlist and the visible queue are two lists that must
+     * stay in step, so both move together. Media3 handles the case where the
+     * playing item is the one moved -- playback continues, only its position in
+     * the running order changes.
      */
-    fun playNext(index: Int) {
+    fun moveInQueue(from: Int, to: Int) {
         val queue = _state.value.queue
-        if (index !in queue.indices) return
-        val playing = (controller?.currentMediaItemIndex ?: -1).coerceAtLeast(0)
-        val target = playing + 1
-        if (index == playing || index == target) return
+        if (from !in queue.indices || to !in queue.indices || from == to) return
 
-        controller?.moveMediaItem(index, target)
+        controller?.moveMediaItem(from, to)
         val reordered = queue.toMutableList()
-        val entry = reordered.removeAt(index)
-        reordered.add(target.coerceAtMost(reordered.size), entry)
+        reordered.add(to, reordered.removeAt(from))
         _state.value = _state.value.copy(queue = reordered)
         rememberSession()
     }

@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
  * scale exactly, and they inherit the accent colour like everything else.
  */
 
-enum class Icon { PLAY, PAUSE, NEXT, PREVIOUS, SEARCH, LIBRARY, MORE, CHEVRON, CLOSE }
+enum class Icon { PLAY, PAUSE, NEXT, PREVIOUS, SEARCH, LIBRARY, MORE, CHEVRON, CLOSE, GRIP }
 
 @Composable
 fun OtoIcon(
@@ -46,6 +46,7 @@ fun OtoIcon(
             Icon.MORE -> drawMore(tint)
             Icon.CHEVRON -> drawChevron(tint)
             Icon.CLOSE -> drawClose(tint)
+            Icon.GRIP -> drawGrip(tint)
         }
     }
 }
@@ -179,6 +180,27 @@ private fun DrawScope.drawChevron(tint: Color) {
         Offset(x, size.height * 0.72f),
         strokeWidth = stroke, cap = StrokeCap.Round,
     )
+}
+
+/**
+ * Three stacked bars: the universal "hold here to move me".
+ *
+ * Drawn rather than shipped as an asset, like every other icon here, so it
+ * inherits the tint and scales without a second file.
+ */
+private fun DrawScope.drawGrip(tint: Color) {
+    val stroke = size.minDimension * 0.10f
+    val inset = size.minDimension * 0.22f
+    val gap = size.height * 0.26f
+    val top = size.height / 2f - gap
+    for (row in 0..2) {
+        drawLine(
+            tint,
+            Offset(inset, top + gap * row),
+            Offset(size.width - inset, top + gap * row),
+            strokeWidth = stroke, cap = StrokeCap.Round,
+        )
+    }
 }
 
 private fun DrawScope.drawClose(tint: Color) {

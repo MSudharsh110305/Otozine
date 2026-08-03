@@ -37,6 +37,11 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import net.otozine.player.ui.theme.pressable
 import net.otozine.player.ui.components.OtoIcon
 import net.otozine.player.ui.components.Icon
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
 import net.otozine.player.PlayerViewModel
 import net.otozine.player.queue.QueueEngine
@@ -103,6 +108,18 @@ fun QueueSheet(state: PlayerViewModel.UiState, viewModel: PlayerViewModel, onDis
             "song forward.",
         onDismiss = onDismiss,
     ) {
+        // Drag-to-reorder, hand-rolled.
+        //
+        // Compose has no reorderable list, and the third-party ones are a
+        // dependency for one screen. The whole mechanism is: remember which row
+        // is held, accumulate the drag, and when the accumulated distance passes
+        // one row height, swap with the neighbour and subtract that height. The
+        // subtraction is what makes a long drag cross several rows instead of
+        // swapping once and sticking.
+        var dragIndex by remember { mutableIntStateOf(-1) }
+        var dragOffset by remember { mutableFloatStateOf(0f) }
+        var rowHeight by remember { mutableFloatStateOf(0f) }
+
         Column {
             SectionHeader("Playing next", action = "rebuild", onAction = {
                 viewModel.rebuildQueue()
@@ -111,17 +128,51 @@ fun QueueSheet(state: PlayerViewModel.UiState, viewModel: PlayerViewModel, onDis
             LazyColumn(Modifier.fillMaxWidth().height(360.dp)) {
                 itemsIndexed(state.queue, key = { _, e -> e.track.id }) { index, entry ->
                     val isCurrent = entry.track.id.toString() == state.nowPlayingId
-                    QueueRow(
-                        entry = entry,
-                        isCurrent = isCurrent,
-                        onClick = { viewModel.playQueueIndex(index) },
-                        onPlayNext = if (isCurrent) null else {
-                            { viewModel.playNext(index) }
-                        },
-                        onRemove = if (isCurrent) null else {
-                            { viewModel.removeFromQueue(index) }
-                        },
-                    )
+                    val isDragging = index == dragIndex
+
+                    Box(
+                        Modifier
+                            .onGloballyPositioned { rowHeight = it.size.height.toFloat() }
+                            .zIndex(if (isDragging) 1f else 0f)
+                            .graphicsLayer {
+                                translationY = if (isDragging) dragOffset else 0f
+                            }
+                    ) {
+                        QueueRow(
+                            entry = entry,
+                            isCurrent = isCurrent,
+                            dragging = isDragging,
+                            onClick = { viewModel.playQueueIndex(index) },
+                            onRemove = if (isCurrent) null else {
+                                { viewModel.removeFromQueue(index) }
+                            },
+                            dragHandle = Modifier.pointerInput(entry.track.id) {
+                                detectDragGestures(
+                                    onDragStart = { dragIndex = index; dragOffset = 0f },
+                                    onDragEnd = { dragIndex = -1; dragOffset = 0f },
+                                    onDragCancel = { dragIndex = -1; dragOffset = 0f },
+                                ) { change, drag ->
+                                    change.consume()
+                                    if (dragIndex < 0 || rowHeight <= 0f) return@detectDragGestures
+                                    dragOffset += drag.y
+
+                                    val step = if (dragOffset > rowHeight) 1
+                                    else if (dragOffset < -rowHeight) -1
+                                    else 0
+                                    if (step != 0) {
+                                        val to = dragIndex + step
+                                        if (to in state.queue.indices) {
+                                            viewModel.moveInQueue(dragIndex, to)
+                                            dragIndex = to
+                                            dragOffset -= step * rowHeight
+                                        } else {
+                                            dragOffset = step * rowHeight
+                                        }
+                                    }
+                                }
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -132,18 +183,25 @@ fun QueueSheet(state: PlayerViewModel.UiState, viewModel: PlayerViewModel, onDis
 private fun QueueRow(
     entry: QueueEngine.Entry,
     isCurrent: Boolean,
+    dragging: Boolean,
     onClick: () -> Unit,
-    onPlayNext: (() -> Unit)? = null,
-    onRemove: (() -> Unit)? = null,
+    onRemove: (() -> Unit)?,
+    dragHandle: Modifier,
 ) {
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .let { if (isCurrent) it.neu(Depth.Inset, RoundedCornerShape(13.dp)) else it }
+            .padding(vertical = 3.dp)
+            .let {
+                when {
+                    dragging -> it.neu(Depth.RaisedHigh, RoundedCornerShape(13.dp))
+                    isCurrent -> it.neu(Depth.Inset, RoundedCornerShape(13.dp))
+                    else -> it
+                }
+            }
             .clip(RoundedCornerShape(13.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 9.dp),
+            .padding(start = 12.dp, end = 4.dp, top = 9.dp, bottom = 9.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
@@ -165,32 +223,33 @@ private fun QueueRow(
             // The micro-reason is the whole point: you can see why it is next.
             Text(entry.headline.uppercase(), style = Oto.type.micro, color = Oto.colors.ink3)
         }
+
+        // Trailing, in the order every music app uses: destructive action
+        // first, then the handle hard against the edge where a thumb reaches
+        // it. Bare glyphs rather than raised pills -- three buttons per row,
+        // thirty rows deep, is a wall of chrome.
+        if (onRemove != null) {
+            Box(
+                Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(50))
+                    .clickable(onClick = onRemove),
+                contentAlignment = Alignment.Center,
+            ) {
+                OtoIcon(Icon.CLOSE, tint = Oto.colors.ink3, size = 14.dp)
+            }
+            Box(
+                dragHandle.size(40.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                OtoIcon(
+                    Icon.GRIP,
+                    tint = if (dragging) Oto.colors.teal else Oto.colors.ink3,
+                    size = 16.dp,
+                )
+            }
+        }
     }
-        onPlayNext?.let { action ->
-            Box(
-                Modifier
-                    .size(30.dp)
-                    .neu(Depth.RaisedSoft, RoundedCornerShape(50))
-                    .clip(RoundedCornerShape(50))
-                    .clickable(onClick = action),
-                contentAlignment = Alignment.Center,
-            ) {
-                OtoIcon(Icon.CHEVRON, tint = Oto.colors.teal, size = 13.dp)
-            }
-        }
-        onRemove?.let { action ->
-            Box(
-                Modifier
-                    .padding(start = 6.dp)
-                    .size(30.dp)
-                    .neu(Depth.RaisedSoft, RoundedCornerShape(50))
-                    .clip(RoundedCornerShape(50))
-                    .clickable(onClick = action),
-                contentAlignment = Alignment.Center,
-            ) {
-                OtoIcon(Icon.CLOSE, tint = Oto.colors.ink3, size = 12.dp)
-            }
-        }
 }
 
 // -------------------------------------------------------------------- why
