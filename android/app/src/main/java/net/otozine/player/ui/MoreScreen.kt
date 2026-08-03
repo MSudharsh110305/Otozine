@@ -37,6 +37,8 @@ import androidx.compose.ui.graphics.Color
 import net.otozine.player.ui.theme.InkColors
 import net.otozine.player.ui.theme.PaperColors
 import net.otozine.player.ui.theme.Scene
+import net.otozine.player.ui.components.StatRing
+import net.otozine.player.ui.components.SplitBar
 import androidx.compose.ui.unit.dp
 import net.otozine.player.PlayerViewModel
 import net.otozine.player.Prefs
@@ -64,7 +66,6 @@ fun MoreScreen(
     prefs: Prefs,
     viewModel: PlayerViewModel,
     onOpenMap: () -> Unit,
-    onOpenStorage: () -> Unit,
     onOpenServer: () -> Unit,
     onImport: () -> Unit,
     onRequestAudio: () -> Unit = {},
@@ -88,26 +89,6 @@ fun MoreScreen(
                     }
                 }
             }
-        }
-
-        SectionHeader("About")
-        Group {
-            Column(Modifier.padding(16.dp)) {
-                val context = LocalContext.current
-                val installed = remember {
-                    runCatching {
-                        val info = context.packageManager.getPackageInfo(context.packageName, 0)
-                        java.text.SimpleDateFormat("d MMM yyyy, HH:mm", java.util.Locale.getDefault())
-                            .format(java.util.Date(info.lastUpdateTime))
-                    }.getOrDefault("unknown")
-                }
-                Text("OtoZine", style = Oto.type.item, color = Oto.colors.ink)
-                Text(
-                    "Installed $installed",
-                    style = Oto.type.sub,
-                    color = Oto.colors.ink2,
-                )
-                }
         }
 
         SectionHeader("Playback")
@@ -148,8 +129,7 @@ fun MoreScreen(
         SectionHeader("Tools")
         Group {
             Column {
-                NavRow("Sound map", "${state.tracks.size} tracks by brightness and intensity", onOpenMap)
-                NavRow("Library & sync", "${state.historyEvents} plays recorded here", onOpenStorage)
+                NavRow("Sound map", "${state.playableCount} songs by brightness and intensity", onOpenMap)
                 NavRow("Import library", "From a USB drive or internal storage", onImport)
                 run {
                     val unmeasured = (state.libraryTracks + state.deviceTracks)
@@ -248,17 +228,78 @@ fun MoreScreen(
 
         SectionHeader("Diagnostics")
         Group {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                // The same figures the Play screen shows, from the same
-                // fields. Two screens computing "how many songs" differently is
-                // how you end up with two wrong answers.
-                Stat("Songs on the drive", "${state.libraryTracks.size}")
-                Stat("Songs on this phone", "${state.deviceTracks.size}")
-                Stat("Distinct songs", "${state.playableCount}")
-                Stat("Measured", "${state.tracks.count { it.isAnalysed }}")
-                Stat("Plays recorded", "${state.historyEvents}")
-                Stat("Queued now", "${state.queue.size}")
-                Stat("Waiting for the drive", "${state.pendingSync}")
+            Column(
+                Modifier.fillMaxWidth().padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                val measured = state.tracks.count { it.isAnalysed }
+                val total = state.tracks.size.coerceAtLeast(1)
+
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    StatRing(
+                        fraction = measured.toFloat() / total,
+                        label = "${(measured * 100 / total)}%",
+                        caption = "measured",
+                    )
+                    Column(
+                        Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text(
+                            "$measured of $total have tempo, key and mood.",
+                            style = Oto.type.body,
+                            color = Oto.colors.ink2,
+                        )
+                        if (measured < total) {
+                            Text(
+                                "The rest play fine; they just cannot be sorted " +
+                                    "by feel or levelled for volume.",
+                                style = Oto.type.micro,
+                                color = Oto.colors.ink3,
+                            )
+                        }
+                    }
+                }
+
+                SplitBar(
+                    parts = listOf(
+                        Triple("drive", state.libraryTracks.size, Oto.colors.teal),
+                        Triple("phone", state.deviceTracks.size, Oto.colors.sky),
+                        Triple("online", state.remoteTracks.size, Oto.colors.ink3),
+                    ),
+                )
+
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Pip("${state.playableCount}", "distinct songs", Modifier.weight(1f))
+                    Pip("${state.historyEvents}", "plays", Modifier.weight(1f))
+                    Pip(
+                        if (state.pendingSync == 0) "—" else "${state.pendingSync}",
+                        "to sync",
+                        Modifier.weight(1f),
+                    )
+                }
+
+                val context = LocalContext.current
+                val installed = remember {
+                    runCatching {
+                        val info = context.packageManager.getPackageInfo(context.packageName, 0)
+                        java.text.SimpleDateFormat(
+                            "d MMM, HH:mm", java.util.Locale.getDefault(),
+                        ).format(java.util.Date(info.lastUpdateTime))
+                    }.getOrDefault("unknown")
+                }
+                Text(
+                    "Installed $installed · nothing here leaves the device",
+                    style = Oto.type.micro,
+                    color = Oto.colors.ink3,
+                )
             }
         }
 
@@ -368,6 +409,19 @@ private fun PaletteSwatch(
             maxLines = 2,
             textAlign = TextAlign.Center,
         )
+    }
+}
+
+@Composable
+private fun Pip(value: String, caption: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier
+            .neu(Depth.Inset, RoundedCornerShape(14.dp))
+            .padding(vertical = 11.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(value, style = Oto.type.item, color = Oto.colors.ink)
+        Text(caption, style = Oto.type.micro, color = Oto.colors.ink3)
     }
 }
 

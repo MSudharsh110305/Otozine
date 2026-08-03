@@ -132,7 +132,6 @@ fun Shell(viewModel: PlayerViewModel, requestAudio: () -> Unit = {}) {
                         prefs = prefs,
                         viewModel = viewModel,
                         onOpenMap = { mapOpen = true },
-                        onOpenStorage = { sheet = SheetKind.STORAGE },
                         onOpenServer = { sheet = SheetKind.SERVER },
                         onImport = pickLibrary,
                         onRequestAudio = requestAudio,
