@@ -195,14 +195,13 @@ fun PlayScreen(state: PlayerViewModel.UiState, viewModel: PlayerViewModel, onOpe
                 // tracks the app can see right now, and the number changes with
                 // what is plugged in. Naming each source says what it is and
                 // makes a missing drive obvious at a glance.
-                StatLine("Songs on the drive", "${state.libraryTracks.size}")
-                StatLine("Songs on this phone", "${state.deviceTracks.size}")
+                // A summary only. The full breakdown lives under More >
+                // Diagnostics; repeating it here in a different shape was what
+                // made the two screens look like they disagreed.
                 val measured = remember(state.tracks) { state.tracks.count { it.isAnalysed } }
+                StatLine("Songs", "${state.playableCount}")
                 StatLine("Measured", "$measured of ${state.tracks.size}")
                 StatLine("Plays recorded", "${state.historyEvents}")
-                if (state.pendingSync > 0) {
-                    StatLine("Waiting for the drive", "${state.pendingSync}")
-                }
                 VSpace(4.dp)
                 Text(
                     if (state.pendingSync > 0)

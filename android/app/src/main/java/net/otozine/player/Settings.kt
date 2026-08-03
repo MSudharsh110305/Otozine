@@ -102,6 +102,37 @@ class Settings(context: Context) {
         _state.value = _state.value.copy(libraryTreeUri = uri)
     }
 
+    /**
+     * Remember what was playing, so a new session resumes rather than restarts.
+     *
+     * Stored as ids rather than as a serialised queue: the library can change
+     * between sessions -- songs copied to the drive, a pendrive unplugged -- and
+     * ids let whatever still exists be restored while anything missing is simply
+     * dropped.
+     */
+    fun saveSession(trackIds: List<Long>, currentId: Long?, positionMs: Long) {
+        prefs.edit()
+            .putString(KEY_SESSION_QUEUE, trackIds.joinToString(","))
+            .putLong(KEY_SESSION_TRACK, currentId ?: -1L)
+            .putLong(KEY_SESSION_POSITION, positionMs)
+            .apply()
+    }
+
+    data class SavedSession(
+        val trackIds: List<Long>,
+        val currentId: Long?,
+        val positionMs: Long,
+    )
+
+    fun savedSession(): SavedSession? {
+        val raw = prefs.getString(KEY_SESSION_QUEUE, null)?.takeIf { it.isNotBlank() }
+            ?: return null
+        val ids = raw.split(",").mapNotNull { it.toLongOrNull() }
+        if (ids.isEmpty()) return null
+        val current = prefs.getLong(KEY_SESSION_TRACK, -1L).takeIf { it != -1L }
+        return SavedSession(ids, current, prefs.getLong(KEY_SESSION_POSITION, 0L))
+    }
+
     fun setSeekOnDoubleTap(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_DOUBLE_TAP_SEEK, enabled).apply()
         _state.value = _state.value.copy(seekOnDoubleTap = enabled)
@@ -151,6 +182,9 @@ class Settings(context: Context) {
     private companion object {
         const val KEY_THEME = "theme"
         const val KEY_PALETTE = "palette"
+        const val KEY_SESSION_QUEUE = "session_queue"
+        const val KEY_SESSION_TRACK = "session_track"
+        const val KEY_SESSION_POSITION = "session_position"
         const val KEY_DEVICE_AUDIO = "device_audio"
         const val KEY_SERVER_URL = "server_url"
         const val KEY_SERVER_USER = "server_user"

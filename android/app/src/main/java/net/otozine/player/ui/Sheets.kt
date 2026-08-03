@@ -35,6 +35,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import net.otozine.player.ui.theme.pressable
+import net.otozine.player.ui.components.OtoIcon
+import net.otozine.player.ui.components.Icon
 import androidx.compose.ui.unit.dp
 import net.otozine.player.PlayerViewModel
 import net.otozine.player.queue.QueueEngine
@@ -97,8 +99,8 @@ fun Sheet(
 fun QueueSheet(state: PlayerViewModel.UiState, viewModel: PlayerViewModel, onDismiss: () -> Unit) {
     Sheet(
         title = "Queue",
-        subtitle = "Built on-device. The engine avoids ${state.queue.size} " +
-            "transitions it has already served.",
+        subtitle = "Built on-device. Tap to jump, or use the arrow to bring a " +
+            "song forward.",
         onDismiss = onDismiss,
     ) {
         Column {
@@ -108,10 +110,17 @@ fun QueueSheet(state: PlayerViewModel.UiState, viewModel: PlayerViewModel, onDis
             })
             LazyColumn(Modifier.fillMaxWidth().height(360.dp)) {
                 itemsIndexed(state.queue, key = { _, e -> e.track.id }) { index, entry ->
+                    val isCurrent = entry.track.id.toString() == state.nowPlayingId
                     QueueRow(
                         entry = entry,
-                        isCurrent = entry.track.id.toString() == state.nowPlayingId,
+                        isCurrent = isCurrent,
                         onClick = { viewModel.playQueueIndex(index) },
+                        onPlayNext = if (isCurrent) null else {
+                            { viewModel.playNext(index) }
+                        },
+                        onRemove = if (isCurrent) null else {
+                            { viewModel.removeFromQueue(index) }
+                        },
                     )
                 }
             }
@@ -120,7 +129,13 @@ fun QueueSheet(state: PlayerViewModel.UiState, viewModel: PlayerViewModel, onDis
 }
 
 @Composable
-private fun QueueRow(entry: QueueEngine.Entry, isCurrent: Boolean, onClick: () -> Unit) {
+private fun QueueRow(
+    entry: QueueEngine.Entry,
+    isCurrent: Boolean,
+    onClick: () -> Unit,
+    onPlayNext: (() -> Unit)? = null,
+    onRemove: (() -> Unit)? = null,
+) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -151,6 +166,31 @@ private fun QueueRow(entry: QueueEngine.Entry, isCurrent: Boolean, onClick: () -
             Text(entry.headline.uppercase(), style = Oto.type.micro, color = Oto.colors.ink3)
         }
     }
+        onPlayNext?.let { action ->
+            Box(
+                Modifier
+                    .size(30.dp)
+                    .neu(Depth.RaisedSoft, RoundedCornerShape(50))
+                    .clip(RoundedCornerShape(50))
+                    .clickable(onClick = action),
+                contentAlignment = Alignment.Center,
+            ) {
+                OtoIcon(Icon.CHEVRON, tint = Oto.colors.teal, size = 13.dp)
+            }
+        }
+        onRemove?.let { action ->
+            Box(
+                Modifier
+                    .padding(start = 6.dp)
+                    .size(30.dp)
+                    .neu(Depth.RaisedSoft, RoundedCornerShape(50))
+                    .clip(RoundedCornerShape(50))
+                    .clickable(onClick = action),
+                contentAlignment = Alignment.Center,
+            ) {
+                OtoIcon(Icon.CLOSE, tint = Oto.colors.ink3, size = 12.dp)
+            }
+        }
 }
 
 // -------------------------------------------------------------------- why

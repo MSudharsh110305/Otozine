@@ -159,6 +159,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
                 refreshMoodsFor(it)
             }
             seekPastIntro(mediaItem)
+            rememberSession()
         }
     }
 
@@ -192,6 +193,57 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
      * response stops feeling immediate, and long enough that a full swipe costs
      * one rebuild rather than sixty.
      */
+    /**
+     * Write down what is playing, for the next launch.
+     *
+     * Called on every track change rather than on a timer: it is a handful of
+     * ids into SharedPreferences, and a timer would be the one thing still
+     * running when the app is killed -- exactly when the record matters most.
+     */
+    private fun rememberSession() {
+        val queue = _state.value.queue.map { it.track.id }
+        if (queue.isEmpty()) return
+        settings.saveSession(
+            trackIds = queue,
+            currentId = _state.value.nowPlayingId?.toLongOrNull(),
+            positionMs = controller?.currentPosition ?: 0L,
+        )
+    }
+
+    /**
+     * Put the last session back, paused.
+     *
+     * Paused deliberately. Opening a music app should not start making noise on
+     * its own -- the queue and the position are restored so one tap continues
+     * where you left off, and doing nothing stays silent.
+     *
+     * Tracks that have since disappeared are dropped rather than treated as an
+     * error: a pendrive that is not plugged in today is the normal case, not a
+     * corrupt session.
+     */
+    private fun restoreSession() {
+        if (_state.value.queue.isNotEmpty()) return          // already playing
+        val saved = settings.savedSession() ?: return
+        val byId = _state.value.tracks.associateBy { it.id }
+
+        val tracks = saved.trackIds.mapNotNull { byId[it] }
+        if (tracks.isEmpty()) return
+        val items = tracks.mapNotNull { mediaItemFor(it) }
+        if (items.isEmpty()) return
+
+        val index = tracks.indexOfFirst { it.id == saved.currentId }.coerceAtLeast(0)
+        _state.value = _state.value.copy(
+            queue = tracks.map {
+                QueueEngine.Entry(it, listOf(QueueEngine.Reason("carried over", 1f)), 1f)
+            },
+            nowPlayingId = tracks[index].id.toString(),
+        )
+        controller?.apply {
+            setMediaItems(items, index, saved.positionMs)
+            prepare()
+        }
+    }
+
     fun rebuildTailDebounced() {
         adventureJob?.cancel()
         adventureJob = viewModelScope.launch {
@@ -524,6 +576,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
                 isPlaying = controller?.isPlaying ?: false,
                 nowPlayingId = controller?.currentMediaItem?.mediaId,
             )
+            if (controller?.currentMediaItem == null) restoreSession()
         }, MoreExecutors.directExecutor())
     }
 
@@ -545,6 +598,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
                 pendingSync = pending,
             )
             trainSkipModel(tracks)
+            restoreSession()
             if (settings.state.value.includeDeviceAudio) scanDevice()
             if (settings.state.value.serverConfigured) loadRemote()
             refreshDriveState()
@@ -994,6 +1048,48 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     fun next() = controller?.seekToNextMediaItem()
     fun previous() = controller?.seekToPreviousMediaItem()
     fun seekTo(ms: Long) = controller?.seekTo(ms)
+
+    /**
+     * Drop a track from the queue without interrupting what is playing.
+     *
+     * The controller and the visible queue are two lists that have to stay in
+     * step, so both are edited together. Removing the current track is refused
+     * rather than handled: it would stop playback from a control whose whole
+     * purpose is to change what comes *next*.
+     */
+    fun removeFromQueue(index: Int) {
+        val queue = _state.value.queue
+        if (index !in queue.indices) return
+        val playing = controller?.currentMediaItemIndex ?: -1
+        if (index == playing) return
+
+        controller?.removeMediaItem(index)
+        _state.value = _state.value.copy(
+            queue = queue.toMutableList().also { it.removeAt(index) },
+        )
+        rememberSession()
+    }
+
+    /**
+     * Move a track to immediately after the one playing.
+     *
+     * The "play next" every music app has, and the reason a queue is worth
+     * showing at all: seeing what is coming is only useful if you can change it.
+     */
+    fun playNext(index: Int) {
+        val queue = _state.value.queue
+        if (index !in queue.indices) return
+        val playing = (controller?.currentMediaItemIndex ?: -1).coerceAtLeast(0)
+        val target = playing + 1
+        if (index == playing || index == target) return
+
+        controller?.moveMediaItem(index, target)
+        val reordered = queue.toMutableList()
+        val entry = reordered.removeAt(index)
+        reordered.add(target.coerceAtMost(reordered.size), entry)
+        _state.value = _state.value.copy(queue = reordered)
+        rememberSession()
+    }
 
     fun playQueueIndex(index: Int) {
         controller?.seekTo(index, 0L)

@@ -28,6 +28,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import net.otozine.player.library.isAnalysed
 import net.otozine.player.ui.theme.OtoPalette
 import net.otozine.player.ui.theme.pressable
 import androidx.compose.ui.platform.LocalContext
@@ -263,11 +264,16 @@ fun MoreScreen(
         SectionHeader("Diagnostics")
         Group {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                Stat("Library tracks", "${state.libraryTracks.size}")
-                Stat("Device tracks", "${state.deviceTracks.size}")
+                // The same figures the Play screen shows, from the same
+                // fields. Two screens computing "how many songs" differently is
+                // how you end up with two wrong answers.
+                Stat("Songs on the drive", "${state.libraryTracks.size}")
+                Stat("Songs on this phone", "${state.deviceTracks.size}")
+                Stat("Distinct songs", "${state.playableCount}")
+                Stat("Measured", "${state.tracks.count { it.isAnalysed }}")
                 Stat("Plays recorded", "${state.historyEvents}")
-                Stat("Transitions blocked", "${state.queue.size}")
-                Stat("Pending sync", "${state.pendingSync}")
+                Stat("Queued now", "${state.queue.size}")
+                Stat("Waiting for the drive", "${state.pendingSync}")
             }
         }
 
