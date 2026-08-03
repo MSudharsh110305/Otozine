@@ -33,6 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.otozine.player.PlayerViewModel
 import net.otozine.player.library.Track
 import net.otozine.player.ui.components.ArtTile
+import net.otozine.player.ui.components.ReactiveSphere
 import net.otozine.player.ui.components.Icon
 import net.otozine.player.ui.components.OtoIcon
 import net.otozine.player.ui.components.HSpace
@@ -330,13 +331,19 @@ private fun MiniPlayer(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(11.dp),
     ) {
-        ArtTile(
-            artKey = track.contentHash,
-            title = track.displayTitle,
-            bitmap = rememberArt(artPath, artPx),
-            modifier = Modifier.size(40.dp),
-            radius = 11.dp,
-        )
+        // Cover with the sphere behind it: the artwork stays the anchor and the
+        // spectrum reacts around it, rather than a separate widget competing
+        // for a bar that is only 40dp tall.
+        Box(Modifier.size(46.dp), contentAlignment = Alignment.Center) {
+            ReactiveSphere(isPlaying = isPlaying, modifier = Modifier.size(46.dp))
+            ArtTile(
+                artKey = track.contentHash,
+                title = track.displayTitle,
+                bitmap = rememberArt(artPath, artPx),
+                modifier = Modifier.size(34.dp),
+                radius = 9.dp,
+            )
+        }
         Column(Modifier.weight(1f)) {
             Text(
                 track.displayTitle,

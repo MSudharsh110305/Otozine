@@ -5,6 +5,8 @@ import android.content.Intent
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Player
+import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -35,10 +37,24 @@ class PlaybackService : MediaSessionService() {
     private lateinit var loudness: LoudnessController
     private lateinit var outputMonitor: AudioOutputMonitor
 
+    @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
 
-        val player = ExoPlayer.Builder(this)
+        // A renderers factory carrying our spectrum tap. The processor sits in
+        // the audio path and passes samples through untouched -- it is the only
+        // way to see the real signal without asking for the microphone.
+        val renderers = object : DefaultRenderersFactory(this) {
+            override fun buildAudioSink(
+                context: android.content.Context,
+                enableFloatOutput: Boolean,
+                enableAudioTrackPlaybackParams: Boolean,
+            ) = DefaultAudioSink.Builder(context)
+                .setAudioProcessors(arrayOf(Spectrum.Processor()))
+                .build()
+        }
+
+        val player = ExoPlayer.Builder(this, renderers)
             .setAudioAttributes(
                 AudioAttributes.Builder()
                     .setUsage(C.USAGE_MEDIA)

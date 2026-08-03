@@ -94,27 +94,6 @@ fun PlayScreen(state: PlayerViewModel.UiState, viewModel: PlayerViewModel, onOpe
             )
         }
 
-        // --- how the queue is built ------------------------------------
-        VSpace(6.dp)
-        SectionHeader("Queue")
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Chip("ANTI-REPEAT", state.queueMode == QueueMode.ANTI_REPEAT) {
-                viewModel.setQueueMode(QueueMode.ANTI_REPEAT)
-            }
-            Chip("JUST SHUFFLE", state.queueMode == QueueMode.SHUFFLE) {
-                viewModel.setQueueMode(QueueMode.SHUFFLE)
-            }
-        }
-        Explain(
-            if (state.queueMode == QueueMode.ANTI_REPEAT)
-                "Avoids what you heard recently and never repeats the same order."
-            else
-                "Plain random over the whole library. No cooldown, no sequencing."
-        )
-
         // --- adventure -------------------------------------------------
         VSpace(6.dp)
         SectionHeader("Adventure")
@@ -123,7 +102,7 @@ fun PlayScreen(state: PlayerViewModel.UiState, viewModel: PlayerViewModel, onOpe
                 "play; right pulls in things you have not heard. Reshapes what is " +
                 "coming up without interrupting this track."
         )
-        if (state.queueMode == QueueMode.ANTI_REPEAT) AdventureSlider(
+        AdventureSlider(
             value = state.adventure,
             onChange = { viewModel.setAdventure(it); viewModel.rebuildTailDebounced() },
             onRelease = { viewModel.rebuildTail() },

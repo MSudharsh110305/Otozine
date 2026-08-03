@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
 import net.otozine.player.PlayerViewModel
+import net.otozine.player.QueueMode
 import net.otozine.player.queue.QueueEngine
 import net.otozine.player.ui.components.NeuCard
 import net.otozine.player.ui.components.SectionHeader
@@ -121,6 +122,17 @@ fun QueueSheet(state: PlayerViewModel.UiState, viewModel: PlayerViewModel, onDis
         var rowHeight by remember { mutableFloatStateOf(0f) }
 
         Column {
+            Row(
+                Modifier.fillMaxWidth().padding(bottom = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Chip("ANTI-REPEAT", state.queueMode == QueueMode.ANTI_REPEAT) {
+                    viewModel.setQueueMode(QueueMode.ANTI_REPEAT)
+                }
+                Chip("JUST SHUFFLE", state.queueMode == QueueMode.SHUFFLE) {
+                    viewModel.setQueueMode(QueueMode.SHUFFLE)
+                }
+            }
             SectionHeader("Playing next", action = "rebuild", onAction = {
                 viewModel.rebuildQueue()
                 onDismiss()

@@ -37,7 +37,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import net.otozine.player.library.Track
 import net.otozine.player.ui.components.ArtTile
-import net.otozine.player.ui.components.BeatBars
 import net.otozine.player.ui.components.Icon
 import net.otozine.player.ui.components.OtoIcon
 import net.otozine.player.ui.components.DataStrip
@@ -183,13 +182,6 @@ fun NowPlayingScreen(
         VSpace(8.dp)
         DataStrip(track.dataValues())
 
-        VSpace(10.dp)
-        BeatBars(
-            bpm = track.bpm,
-            positionMs = positionMs,
-            isPlaying = isPlaying,
-            modifier = Modifier.fillMaxWidth(),
-        )
 
         // The "why" chip: one line, always tappable. Trust feature and label
         // collection surface in one.

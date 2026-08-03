@@ -2,6 +2,7 @@ package net.otozine.player.library
 
 import android.content.Context
 import android.net.Uri
+import android.provider.DocumentsContract
 import android.util.Log
 
 /**
@@ -44,9 +45,14 @@ object DriveWatcher {
         }
         if (!held) return State.NONE
 
-        // No document to test against: assume reachable rather than claim a
-        // fault we have not observed.
-        val probe = probeUri?.takeIf { it.startsWith("content://") } ?: return State.CONNECTED
+        // With no track to test against, test the tree itself.
+        //
+        // This used to assume "reachable" and it was wrong in the case that
+        // matters: a library with no content:// paths -- copied to the phone, or
+        // built from phone files -- gave nothing to probe, so an unplugged drive
+        // reported CONNECTED and every control gated on it stayed enabled.
+        val probe = probeUri?.takeIf { it.startsWith("content://") }
+            ?: return if (treeReachable(context, treeUri)) State.CONNECTED else State.DISCONNECTED
 
         return try {
             context.contentResolver.openInputStream(Uri.parse(probe))?.use { stream ->
@@ -59,5 +65,25 @@ object DriveWatcher {
             Log.i(TAG, "drive unreachable: ${e.javaClass.simpleName}")
             State.DISCONNECTED
         }
+    }
+
+    /**
+     * Can the granted tree still be listed?
+     *
+     * Listing children is the cheapest operation that actually touches the
+     * medium; holding a permission says nothing about whether the device behind
+     * it is still there.
+     */
+    private fun treeReachable(context: Context, treeUri: String): Boolean = try {
+        val tree = Uri.parse(treeUri)
+        val children = DocumentsContract.buildChildDocumentsUriUsingTree(
+            tree, DocumentsContract.getTreeDocumentId(tree),
+        )
+        context.contentResolver.query(
+            children, arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID), null, null, null,
+        )?.use { true } ?: false
+    } catch (e: Exception) {
+        Log.i(TAG, "tree unreachable: ${e.javaClass.simpleName}")
+        false
     }
 }
