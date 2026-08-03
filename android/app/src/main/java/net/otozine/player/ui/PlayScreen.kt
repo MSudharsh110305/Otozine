@@ -103,7 +103,7 @@ fun PlayScreen(state: PlayerViewModel.UiState, viewModel: PlayerViewModel, onOpe
         )
         AdventureSlider(
             value = state.adventure,
-            onChange = viewModel::setAdventure,
+            onChange = { viewModel.setAdventure(it); viewModel.rebuildTailDebounced() },
             onRelease = { viewModel.rebuildTail() },
         )
 
@@ -319,10 +319,20 @@ private fun AdventureSlider(value: Float, onChange: (Float) -> Unit, onRelease: 
             }
         }
         VSpace(6.dp)
-        Row(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text("COMFORT", style = Oto.type.micro, color = Oto.colors.ink3)
             Box(Modifier.weight(1f))
-            Text("${(value * 100).toInt()}%", style = Oto.type.data, color = Oto.colors.teal)
+            Text(
+                when {
+                    value < 0.2f -> "FAVOURITES"
+                    value < 0.45f -> "MOSTLY KNOWN"
+                    value < 0.7f -> "A FEW SURPRISES"
+                    value < 0.9f -> "MOSTLY NEW"
+                    else -> "ANYTHING"
+                },
+                style = Oto.type.label,
+                color = Oto.colors.teal,
+            )
             Box(Modifier.weight(1f))
             Text("ADVENTURE", style = Oto.type.micro, color = Oto.colors.ink3)
         }

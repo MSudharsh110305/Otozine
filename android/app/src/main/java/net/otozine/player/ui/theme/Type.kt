@@ -59,30 +59,30 @@ data class OtoTypography(
 val Typography = OtoTypography(
     display = TextStyle(
         fontFamily = ZenMaru, fontWeight = FontWeight.Bold,
-        fontSize = 21.sp, lineHeight = 25.sp, letterSpacing = (-0.02).em,
+        fontSize = 23.sp, lineHeight = 28.sp, letterSpacing = (-0.02).em,
     ),
     title = TextStyle(
         fontFamily = ZenMaru, fontWeight = FontWeight.Medium,
-        fontSize = 17.sp, lineHeight = 21.sp, letterSpacing = (-0.01).em,
+        fontSize = 18.sp, lineHeight = 23.sp, letterSpacing = (-0.01).em,
     ),
     item = TextStyle(
         fontFamily = ZenMaru, fontWeight = FontWeight.Medium,
-        fontSize = 13.5.sp, lineHeight = 17.sp,
+        fontSize = 15.sp, lineHeight = 19.sp,
     ),
     sub = TextStyle(
-        fontFamily = ZenMaru, fontWeight = FontWeight.Normal,
-        fontSize = 11.5.sp, lineHeight = 15.sp,
+        fontFamily = ZenMaru, fontWeight = FontWeight.Medium,
+        fontSize = 13.sp, lineHeight = 17.sp,
     ),
     body = TextStyle(
-        fontFamily = ZenMaru, fontWeight = FontWeight.Normal,
-        fontSize = 12.sp, lineHeight = 18.sp,
+        fontFamily = ZenMaru, fontWeight = FontWeight.Medium,
+        fontSize = 13.5.sp, lineHeight = 20.sp,
     ),
     label = TextStyle(
         fontFamily = DmMono, fontWeight = FontWeight.Medium,
-        fontSize = 9.sp, lineHeight = 11.sp, letterSpacing = 0.1.em,
+        fontSize = 10.5.sp, lineHeight = 13.sp, letterSpacing = 0.1.em,
     ),
     data = TextStyle(
-        fontFamily = DmMono, fontWeight = FontWeight.Normal,
+        fontFamily = DmMono, fontWeight = FontWeight.Medium,
         fontSize = 10.sp, lineHeight = 13.sp, letterSpacing = 0.04.em,
     ),
     micro = TextStyle(

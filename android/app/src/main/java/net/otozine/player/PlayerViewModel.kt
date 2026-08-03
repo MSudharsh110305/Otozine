@@ -90,7 +90,25 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     ) {
         /** Everything playable, whatever its source. */
         val tracks: List<Track> get() = libraryTracks + deviceTracks + remoteTracks
-        val playableCount: Int get() = tracks.size
+        /**
+         * Distinct songs, not rows.
+         *
+         * `tracks` concatenates the drive, the phone and the server, so a song
+         * copied from the phone to the drive appeared in two of them and the
+         * count climbed every time music was copied without a single new song
+         * existing. Matching on title and length is the same test the transfer
+         * uses to skip duplicates.
+         */
+        val playableCount: Int get() {
+            val seen = HashSet<String>()
+            var n = 0
+            for (track in tracks) {
+                val key = track.displayTitle.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim() +
+                    "|" + (track.durationMs / 2000)
+                if (seen.add(key)) n++
+            }
+            return n
+        }
 
         val nowPlaying: Track? get() = tracks.firstOrNull { it.id.toString() == nowPlayingId }
 
@@ -164,6 +182,24 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
      * choosing "copy to phone" looked like it had done something and had not.
      * Now the setting and the files agree the moment you pick.
      */
+    private var adventureJob: kotlinx.coroutines.Job? = null
+
+    /**
+     * Rebuild while the dial is still moving, without rebuilding per pixel.
+     *
+     * A drag emits a change every frame and a rebuild scores the whole library,
+     * so doing it eagerly would stutter. 180 ms is under the threshold where a
+     * response stops feeling immediate, and long enough that a full swipe costs
+     * one rebuild rather than sixty.
+     */
+    fun rebuildTailDebounced() {
+        adventureJob?.cancel()
+        adventureJob = viewModelScope.launch {
+            delay(180)
+            rebuildTail()
+        }
+    }
+
     fun setPalette(name: String?) = settings.setPalette(name)
 
     fun setStorageMode(mode: StorageMode) {
@@ -697,6 +733,34 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
      * matching and tempo steps. Those terms simply contribute nothing for
      * tracks with no measurements, rather than being faked.
      */
+    /**
+     * Play an explicit list, in order or shuffled.
+     *
+     * Deliberately bypasses the queue engine. When you tap "play all" on a list
+     * you are asking for *that* list -- reordering it by taste would be the app
+     * overruling a direct instruction, which is the opposite of what the engine
+     * is for.
+     */
+    fun playList(tracks: List<Track>, shuffle: Boolean) {
+        val playable = tracks.filter { it.opusPath != null }
+        if (playable.isEmpty()) return
+        val ordered = if (shuffle) playable.shuffled() else playable
+        val items = ordered.mapNotNull { mediaItemFor(it) }
+        if (items.isEmpty()) return
+
+        val reason = if (shuffle) "shuffled from this list" else "from this list"
+        _state.value = _state.value.copy(
+            queue = ordered.map {
+                QueueEngine.Entry(it, listOf(QueueEngine.Reason(reason, 1f)), 1f)
+            }
+        )
+        controller?.apply {
+            setMediaItems(items, 0, 0L)
+            prepare()
+            play()
+        }
+    }
+
     fun playFrom(seed: Track?, size: Int = 40) {
         viewModelScope.launch {
             val current = _state.value

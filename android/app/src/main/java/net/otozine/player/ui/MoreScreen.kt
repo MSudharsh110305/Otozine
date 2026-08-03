@@ -75,8 +75,7 @@ fun MoreScreen(
         Group {
             Column(Modifier.padding(vertical = 12.dp)) {
                 Text(
-                    "Auto follows the system between Paper and Ink. Anything else " +
-                        "stays put.",
+                    "Pick how the app looks. The choice sticks until you change it.",
                     style = Oto.type.body,
                     color = Oto.colors.ink3,
                     modifier = Modifier.padding(horizontal = 16.dp),
@@ -86,15 +85,6 @@ fun MoreScreen(
                     contentPadding = PaddingValues(horizontal = 14.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    // Auto is one of the choices rather than a separate control,
-                    // because "follow the system" is a theme like any other --
-                    // splitting it out is what made the two sections disagree.
-                    item(key = "auto") {
-                        PaletteSwatch(
-                            palette = null,
-                            selected = prefs.palette == null,
-                        ) { viewModel.setPalette(null) }
-                    }
                     items(OtoPalette.entries.toList(), key = { it.name }) { palette ->
                         PaletteSwatch(
                             palette = palette,

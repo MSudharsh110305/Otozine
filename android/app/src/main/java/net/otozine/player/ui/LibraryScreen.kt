@@ -466,7 +466,25 @@ private fun FlatList(
     }
 
     LazyColumn(Modifier.fillMaxSize()) {
-        item { SectionHeader("${tracks.size} songs") }
+        item {
+            // Play all and Shuffle, where every music app puts them. Getting a
+            // list playing previously meant picking one song and hoping the
+            // queue engine chose sensibly from there.
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(9.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "${tracks.size} SONGS",
+                    style = Oto.type.label,
+                    color = Oto.colors.ink3,
+                    modifier = Modifier.weight(1f),
+                )
+                Chip("PLAY ALL", selected = false) { viewModel.playList(tracks, shuffle = false) }
+                Chip("SHUFFLE", selected = true) { viewModel.playList(tracks, shuffle = true) }
+            }
+        }
         items(tracks, key = { it.id }) { track ->
             TrackRow(
                 track = track,
