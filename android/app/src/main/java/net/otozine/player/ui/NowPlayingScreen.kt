@@ -59,6 +59,7 @@ fun NowPlayingScreen(
     outputLabel: String = "OUTPUT",
     reason: String? = null,
     seekOnDoubleTap: Boolean = false,
+    queueLabel: String = "QUEUE",
     onToggle: () -> Unit,
     onNext: () -> Unit,
     onPrevious: () -> Unit,
@@ -124,7 +125,7 @@ fun NowPlayingScreen(
 
         VSpace(6.dp)
         Text(
-            "ANTI-REPEAT QUEUE",
+            queueLabel,
             style = Oto.type.label,
             color = colors.teal,
             modifier = Modifier.fillMaxWidth().clickable(onClick = onQueue),
@@ -299,6 +300,7 @@ private fun Scrubber(
     positionMs: Long,
     durationMs: Long,
     seekOnDoubleTap: Boolean = false,
+    queueLabel: String = "QUEUE",
     onSeek: (Long) -> Unit = {},
 ) {
     val colors = Oto.colors

@@ -50,7 +50,15 @@ class PlaybackService : MediaSessionService() {
                 enableFloatOutput: Boolean,
                 enableAudioTrackPlaybackParams: Boolean,
             ) = DefaultAudioSink.Builder(context)
-                .setAudioProcessors(arrayOf(Spectrum.Processor()))
+                // A *chain*, not a bare array. setAudioProcessors replaces the
+                // sink's whole default chain -- channel mapping, trimming and
+                // Sonic -- so the sink could no longer adapt formats to the
+                // output and playback stopped dead at 0:00. Wrapping in
+                // DefaultAudioProcessorChain keeps all of that and adds ours in
+                // front of it.
+                .setAudioProcessorChain(
+                    DefaultAudioSink.DefaultAudioProcessorChain(Spectrum.Processor())
+                )
                 .build()
         }
 

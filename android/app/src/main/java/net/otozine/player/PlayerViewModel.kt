@@ -594,6 +594,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
                 labelledCount = withContext(Dispatchers.IO) { history.labelledCount() },
                 loading = false,
                 libraryPresent = library.isPresent,
+                queueMode = settings.state.value.queueMode,
                 historyEvents = snapshot.totalEvents,
                 playedTrackIds = snapshot.lastPlayedAt.keys,
                 pendingSync = pending,
@@ -816,7 +817,19 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun setQueueMode(mode: QueueMode) = settings.setQueueMode(mode)
+    fun setQueueMode(mode: QueueMode) {
+        if (settings.state.value.queueMode == mode) return
+        settings.setQueueMode(mode)
+        _state.value = _state.value.copy(queueMode = mode)
+        // Rebuild from what is playing, so the change is audible in the queue
+        // immediately rather than at the next track.
+        playFrom(_state.value.nowPlaying)
+    }
+
+    /** What the queue was built by, for the "playing from" line. */
+    fun queueSourceLabel(): String =
+        if (settings.state.value.queueMode == QueueMode.SHUFFLE) "SHUFFLE"
+        else "ANTI-REPEAT QUEUE"
 
     fun playFrom(seed: Track?, size: Int = 40) {
         // Plain shuffle when asked for it.

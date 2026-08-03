@@ -172,6 +172,7 @@ fun Shell(viewModel: PlayerViewModel, requestAudio: () -> Unit = {}) {
                 outputLabel = state.output,
                 reason = state.currentReason?.headline,
                 seekOnDoubleTap = prefs.seekOnDoubleTap,
+                queueLabel = viewModel.queueSourceLabel(),
                 onToggle = viewModel::togglePlayPause,
                 onNext = { viewModel.next() },
                 onPrevious = { viewModel.previous() },

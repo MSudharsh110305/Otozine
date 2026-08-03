@@ -97,11 +97,6 @@ fun PlayScreen(state: PlayerViewModel.UiState, viewModel: PlayerViewModel, onOpe
         // --- adventure -------------------------------------------------
         VSpace(6.dp)
         SectionHeader("Adventure")
-        Explain(
-            "How far the queue wanders. Left keeps it near what you already " +
-                "play; right pulls in things you have not heard. Reshapes what is " +
-                "coming up without interrupting this track."
-        )
         AdventureSlider(
             value = state.adventure,
             onChange = { viewModel.setAdventure(it); viewModel.rebuildTailDebounced() },
@@ -112,20 +107,16 @@ fun PlayScreen(state: PlayerViewModel.UiState, viewModel: PlayerViewModel, onOpe
         // These need measured mood to mean anything. Against tracks that were
         // never analysed every value is the same neutral 0.5, so the presets
         // would look like they work and quietly do nothing.
-        val analysed = remember(state.libraryTracks) { state.libraryTracks.count { it.isAnalysed } }
+        val analysed = remember(state.tracks) { state.tracks.count { it.isAnalysed } }
         // Only offer sessions that can actually match something in the library.
-        val available = remember(state.libraryTracks, state.labelledCount) { viewModel.knownMoods() }
+        val available = remember(state.tracks, state.labelledCount) { viewModel.knownMoods() }
 
         VSpace(10.dp)
         SectionHeader("Sessions", action = if (analysed > 0) "set vibe" else null, onAction = onOpenVibe)
         if (analysed > 0) {
-            Explain(
-                if (state.targetMoods.isEmpty())
-                    "Start a queue shaped around a mood. Tracks you have labelled " +
-                        "yourself count first."
-                else
-                    "Steering toward: " + state.targetMoods.joinToString(", ") + "."
-            )
+            if (state.targetMoods.isNotEmpty()) {
+                Explain("Steering toward " + state.targetMoods.joinToString(", ") + ".")
+            }
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 14.dp),
                 horizontalArrangement = Arrangement.spacedBy(9.dp),
@@ -144,12 +135,9 @@ fun PlayScreen(state: PlayerViewModel.UiState, viewModel: PlayerViewModel, onOpe
                 }
             }
         } else {
-            Explain(
-                "Mood sessions need tracks measured by the Librarian — nothing " +
-                    "here has a tempo or key yet, so there is no mood to sort by. " +
-                    "Anti-repeat still works: the queue avoids songs you heard " +
-                    "recently and never repeats the same order."
-            )
+            // Still worth a line: this is an empty state, and an empty row of
+            // buttons with no explanation is the one case where silence is worse.
+            Explain("Nothing measured yet. Run Analyse on this phone under More.")
         }
 
         // --- never played ----------------------------------------------
