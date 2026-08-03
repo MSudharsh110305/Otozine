@@ -1012,6 +1012,9 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
 
     fun clearSession() {
         _state.value = _state.value.copy(targetMoods = emptySet(), mood = null)
+        // Rebuild on the way out too. Turning a mood off left the queue shaped
+        // by it, so the button appeared to do nothing until the next track.
+        if (_state.value.nowPlaying != null) rebuildTail() else playFrom(null)
     }
 
     /**

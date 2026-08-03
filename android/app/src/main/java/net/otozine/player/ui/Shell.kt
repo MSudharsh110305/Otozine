@@ -336,7 +336,7 @@ private fun MiniPlayer(
         // spectrum reacts around it, rather than a separate widget competing
         // for a bar that is only 40dp tall.
         Box(Modifier.size(46.dp), contentAlignment = Alignment.Center) {
-            ReactiveSphere(isPlaying = isPlaying, modifier = Modifier.size(46.dp))
+            ReactiveSphere(isPlaying = isPlaying, bpm = track.bpm, modifier = Modifier.size(46.dp))
             ArtTile(
                 artKey = track.contentHash,
                 title = track.displayTitle,

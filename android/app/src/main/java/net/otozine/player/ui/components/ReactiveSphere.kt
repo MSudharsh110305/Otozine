@@ -11,34 +11,32 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import net.otozine.player.playback.Spectrum
 import net.otozine.player.ui.theme.Oto
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.math.exp
 import kotlin.math.sin
 
 /**
- * A sphere that breathes with the music.
+ * A sphere that pulses with the beat.
  *
- * The radius at each angle comes from a real frequency band, measured from the
- * PCM on its way to the speaker -- bass at the top, rising through the spectrum
- * around the circle and mirrored across the vertical so the shape stays
- * symmetrical rather than lopsided.
+ * Driven by the track's measured tempo and the playback position, not by the
+ * audio itself. Reading the real signal needs either the microphone permission
+ * or a tap in the playback pipeline; the tap was tried and it stopped playback
+ * dead, and a decoration is not worth a player that will not play.
  *
- * The earlier version derived movement from the track's tempo. It was honest
- * about being a metronome, but a metronome is not what "reactive" means: it
- * moved identically through a silence and a chorus. This one is the signal.
- *
- * Reads a shared array once per frame -- no allocation in the draw loop, and no
- * work at all when nothing is playing.
+ * So this is honest about what it is: a metronome you can see. It pulses on the
+ * beat of whatever is playing, and it does not know loud from quiet.
  */
 @Composable
 fun ReactiveSphere(
     isPlaying: Boolean,
+    bpm: Float?,
     modifier: Modifier = Modifier,
 ) {
     val colors = Oto.colors
-    val bands = remember { FloatArray(Spectrum.BANDS) }
+    val bandCount = 24
+    val bands = remember { FloatArray(bandCount) }
 
     val frame by produceState(0f, isPlaying) {
         if (!isPlaying) { value = 0f; return@produceState }
@@ -49,7 +47,15 @@ fun ReactiveSphere(
     }
 
     Canvas(modifier) {
-        if (isPlaying) Spectrum.read(bands) else bands.fill(0f)
+        // Beat envelope: struck on the beat, decaying after it. Each band is
+        // offset a little so the shape ripples rather than breathing as one
+        // circle.
+        val tempo = (bpm ?: 100f).coerceIn(60f, 190f)
+        val beat = if (isPlaying) ((frame * tempo / 60f) % 1f) else 1f
+        for (b in bands.indices) {
+            val offset = (beat + b * 0.035f) % 1f
+            bands[b] = if (isPlaying) exp(-offset * 4.2f) * (0.55f + 0.45f * sin(b * 1.3f)) else 0f
+        }
         val centre = Offset(size.width / 2f, size.height / 2f)
         val base = size.minDimension * 0.28f
         val reach = size.minDimension * 0.20f
@@ -69,7 +75,7 @@ fun ReactiveSphere(
             // Mirror the spectrum across the vertical axis: the same band
             // appears left and right, so the shape reads as one object.
             val mirrored = if (t <= 0.5f) t * 2f else (1f - t) * 2f
-            val band = (mirrored * (Spectrum.BANDS - 1)).toInt().coerceIn(0, Spectrum.BANDS - 1)
+            val band = (mirrored * (bandCount - 1)).toInt().coerceIn(0, bandCount - 1)
             val level = bands[band]
 
             // A little drift so it is never perfectly still, even in silence.
