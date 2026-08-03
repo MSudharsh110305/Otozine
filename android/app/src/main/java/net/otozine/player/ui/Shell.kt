@@ -88,11 +88,18 @@ fun Shell(viewModel: PlayerViewModel, requestAudio: () -> Unit = {}) {
     // the app, even with a sheet or Now Playing open. One handler with explicit
     // priority: dismiss whatever is on top, then fall back to the Play tab, and
     // only leave from there.
-    BackHandler(enabled = sheet != null || mapOpen || nowPlayingOpen || tab != Tab.PLAY) {
+    BackHandler(
+            enabled = sheet != null || mapOpen || nowPlayingOpen ||
+                state.searchQuery.isNotBlank() || tab != Tab.PLAY,
+        ) {
         when {
             sheet != null -> sheet = null
             mapOpen -> mapOpen = false
             nowPlayingOpen -> nowPlayingOpen = false
+            // A search is a state you are in, so back leaves it before it
+            // leaves the screen -- reaching for Clear is a step the
+            // gesture should have covered.
+            state.searchQuery.isNotBlank() -> viewModel.search("")
             else -> tab = Tab.PLAY
         }
     }
@@ -141,6 +148,19 @@ fun Shell(viewModel: PlayerViewModel, requestAudio: () -> Unit = {}) {
                 ?.takeIf { state.transferMinimised && !it.finished }
                 ?.let { progress ->
                     TransferStrip(progress) { viewModel.minimiseTransfer(false) }
+                }
+
+            state.analysing
+                ?.takeIf { state.analysisMinimised && !it.finished }
+                ?.let { progress ->
+                    TransferStrip(
+                        net.otozine.player.library.DriveTransfer.Progress(
+                            done = progress.done,
+                            total = progress.total,
+                            currentTitle = progress.currentTitle,
+                            stage = "measuring",
+                        )
+                    ) { viewModel.minimiseAnalysis(false) }
                 }
 
             AnimatedVisibility(
@@ -240,9 +260,15 @@ fun Shell(viewModel: PlayerViewModel, requestAudio: () -> Unit = {}) {
             )
         }
 
-        state.analysing?.let { progress ->
-            AnalysisOverlay(progress, onCancel = viewModel::cancelAnalysis)
-        }
+        state.analysing
+            ?.takeIf { !state.analysisMinimised || it.finished }
+            ?.let { progress ->
+                AnalysisOverlay(
+                    progress,
+                    onMinimise = { viewModel.minimiseAnalysis(true) },
+                    onCancel = viewModel::cancelAnalysis,
+                )
+            }
 
         state.busyMessage?.let { message ->
             BusyToast(message, onDismiss = viewModel::dismissBusy)

@@ -505,7 +505,17 @@ private fun FlatList(
 /** Search only on the song name, since that is the only field we trust. */
 fun List<Track>.matching(query: String): List<Track> {
     val needle = query.trim().lowercase()
+    // Collapse the same song appearing on more than one source. Searching spans
+    // drive, phone and server, so anything copied to the drive was listed twice
+    // -- identical rows, differing only by which copy happened to have artwork.
+    val seen = HashSet<String>()
     return filter { it.displayTitle.lowercase().contains(needle) }
+        .filter {
+            seen.add(
+                it.displayTitle.lowercase().replace(Regex("[^a-z0-9]+"), " ").trim() +
+                    "|" + (it.durationMs / 2000)
+            )
+        }
 }
 
 @Composable

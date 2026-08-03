@@ -56,17 +56,19 @@ data class OtoColors(
 )
 
 val PaperColors = OtoColors(
-    page = Color(0xFFEBE3D8),
-    surface = Color(0xFFF7F2E9),
-    sunken = Color(0xFFE2D9CC),
-    highlight = Color(0xF2FFFDF6),
-    shadow = Color(0x5C927E63),
-    ink = Color(0xFF463F35),
-    ink2 = Color(0xFF8A7F6F),
-    ink3 = Color(0xFFADA294),
-    teal = Color(0xFF2E9E9B),
-    sky = Color(0xFF5FA8D3),
-    line = Color(0x33927E63),
+    page = Color(0xFFE8E2D5),
+    surface = Color(0xFFF4EFE4),
+    sunken = Color(0xFFDED7C7),
+    highlight = Color(0xF7FFFEF9),
+    shadow = Color(0x4F8C7A5E),
+    ink = Color(0xFF3A352C),
+    ink2 = Color(0xFF7B7264),
+    ink3 = Color(0xFFA79E8E),
+    // Deep pine rather than bright teal: an accent that looks printed on the
+    // page instead of lit from behind it.
+    teal = Color(0xFF3F6B54),
+    sky = Color(0xFF8A6A46),
+    line = Color(0x2E8C7A5E),
     isDark = false,
 )
 

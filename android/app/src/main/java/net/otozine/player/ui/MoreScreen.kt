@@ -75,12 +75,6 @@ fun MoreScreen(
         SectionHeader("Appearance")
         Group {
             Column(Modifier.padding(vertical = 12.dp)) {
-                Text(
-                    "Pick how the app looks. The choice sticks until you change it.",
-                    style = Oto.type.body,
-                    color = Oto.colors.ink3,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
                 VSpace(10.dp)
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 14.dp),
@@ -113,14 +107,7 @@ fun MoreScreen(
                     style = Oto.type.sub,
                     color = Oto.colors.ink2,
                 )
-                Text(
-                    "Asked of the system rather than baked in at build time, so " +
-                        "it cannot go stale. If this is older than the build you " +
-                        "meant to install, the phone is running the previous one.",
-                    style = Oto.type.micro,
-                    color = Oto.colors.ink3,
-                )
-            }
+                }
         }
 
         SectionHeader("Playback")
@@ -220,9 +207,7 @@ fun MoreScreen(
                     ) { viewModel.setStorageMode(StorageMode.COPY) }
                 }
                 Text(
-                    "Switching moves the audio straight away, and applies to " +
-                        "future imports. Individual tracks can still be pinned to " +
-                        "the phone from the library (long-press a song).",
+                    "Moves the audio now, and applies to future imports.",
                     style = Oto.type.micro,
                     color = Oto.colors.ink3,
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 14.dp),
@@ -263,7 +248,7 @@ fun MoreScreen(
 
         SectionHeader("Diagnostics")
         Group {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 // The same figures the Play screen shows, from the same
                 // fields. Two screens computing "how many songs" differently is
                 // how you end up with two wrong answers.

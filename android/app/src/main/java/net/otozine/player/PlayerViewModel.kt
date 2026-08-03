@@ -72,6 +72,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
         val transferring: DriveTransfer.Progress? = null,
         /** Minimised to a strip so the app stays usable while it runs. */
         val transferMinimised: Boolean = false,
+        val analysisMinimised: Boolean = false,
         val queueMode: QueueMode = QueueMode.ANTI_REPEAT,
         val pendingSync: Int = 0,
         val sleepTimerEndsAt: Long? = null,
@@ -417,7 +418,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
                     _state.value = _state.value.copy(analysing = progress)
                 },
             )
-            _state.value = _state.value.copy(analysing = result)
+            _state.value = _state.value.copy(analysing = result, analysisMinimised = false)
             refresh()
             delay(2500)
             _state.value = _state.value.copy(analysing = null)
@@ -511,6 +512,10 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
                 _state.value = _state.value.copy(pendingSync = history.pendingSyncCount())
             }
         }
+    }
+
+    fun minimiseAnalysis(minimised: Boolean) {
+        _state.value = _state.value.copy(analysisMinimised = minimised)
     }
 
     fun minimiseTransfer(minimised: Boolean) {
@@ -1118,6 +1123,13 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     fun moveInQueue(from: Int, to: Int) {
         val queue = _state.value.queue
         if (from !in queue.indices || to !in queue.indices || from == to) return
+
+        // Nothing may be moved to or from a slot at or before the one playing.
+        // Those positions are already spent: Media3 accepts the move happily and
+        // the song is simply never reached, so the drag appears to work and then
+        // the track silently disappears.
+        val playing = controller?.currentMediaItemIndex ?: -1
+        if (playing >= 0 && (from <= playing || to <= playing)) return
 
         controller?.moveMediaItem(from, to)
         val reordered = queue.toMutableList()

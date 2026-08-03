@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,7 +34,11 @@ import net.otozine.player.ui.theme.neu
  * saved per track and re-running skips whatever is already done.
  */
 @Composable
-fun AnalysisOverlay(progress: AnalysisWorker.Progress, onCancel: () -> Unit) {
+fun AnalysisOverlay(
+    progress: AnalysisWorker.Progress,
+    onMinimise: (() -> Unit)? = null,
+    onCancel: () -> Unit,
+) {
     val colors = Oto.colors
     val fraction =
         if (progress.total > 0) progress.done.toFloat() / progress.total else 0f
@@ -95,13 +100,21 @@ fun AnalysisOverlay(progress: AnalysisWorker.Progress, onCancel: () -> Unit) {
                     }
 
                     Text(
-                        "A few seconds per track. Progress is saved as it goes, so " +
-                            "stopping now loses nothing — re-running skips what is done.",
+                        "Saved as it goes — stopping keeps what is done.",
                         style = Oto.type.body,
                         color = colors.ink3,
                     )
                     VSpace(2.dp)
-                    SheetButton("STOP", modifier = Modifier.fillMaxWidth()) { onCancel() }
+                    Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                        if (onMinimise != null) {
+                            SheetButton(
+                                "KEEP USING APP",
+                                accent = true,
+                                modifier = Modifier.weight(1f),
+                            ) { onMinimise() }
+                        }
+                        SheetButton("STOP", modifier = Modifier.weight(1f)) { onCancel() }
+                    }
                 }
             }
         }
