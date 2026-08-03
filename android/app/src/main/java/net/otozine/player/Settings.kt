@@ -7,6 +7,9 @@ import kotlinx.coroutines.flow.StateFlow
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
+/** How the next queue gets built. */
+enum class QueueMode { ANTI_REPEAT, SHUFFLE }
+
 /** Where the audio actually lives once a library is imported. */
 enum class StorageMode {
     /**
@@ -38,6 +41,7 @@ data class Prefs(
     val theme: ThemeMode = ThemeMode.SYSTEM,
     /** Name of an OtoPalette, or null to follow [theme]. */
     val palette: String? = null,
+    val queueMode: QueueMode = QueueMode.ANTI_REPEAT,
     val includeDeviceAudio: Boolean = false,
     val serverUrl: String = "",
     val serverUser: String = "",
@@ -79,6 +83,9 @@ class Settings(context: Context) {
             ThemeMode.valueOf(prefs.getString(KEY_THEME, null) ?: ThemeMode.SYSTEM.name)
         }.getOrDefault(ThemeMode.SYSTEM),
         palette = prefs.getString(KEY_PALETTE, null),
+        queueMode = runCatching {
+            QueueMode.valueOf(prefs.getString(KEY_QUEUE_MODE, null) ?: QueueMode.ANTI_REPEAT.name)
+        }.getOrDefault(QueueMode.ANTI_REPEAT),
         includeDeviceAudio = prefs.getBoolean(KEY_DEVICE_AUDIO, false),
         serverUrl = prefs.getString(KEY_SERVER_URL, "").orEmpty(),
         serverUser = prefs.getString(KEY_SERVER_USER, "").orEmpty(),
@@ -133,6 +140,11 @@ class Settings(context: Context) {
         return SavedSession(ids, current, prefs.getLong(KEY_SESSION_POSITION, 0L))
     }
 
+    fun setQueueMode(mode: QueueMode) {
+        prefs.edit().putString(KEY_QUEUE_MODE, mode.name).apply()
+        _state.value = _state.value.copy(queueMode = mode)
+    }
+
     fun setSeekOnDoubleTap(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_DOUBLE_TAP_SEEK, enabled).apply()
         _state.value = _state.value.copy(seekOnDoubleTap = enabled)
@@ -182,6 +194,7 @@ class Settings(context: Context) {
     private companion object {
         const val KEY_THEME = "theme"
         const val KEY_PALETTE = "palette"
+        const val KEY_QUEUE_MODE = "queue_mode"
         const val KEY_SESSION_QUEUE = "session_queue"
         const val KEY_SESSION_TRACK = "session_track"
         const val KEY_SESSION_POSITION = "session_position"

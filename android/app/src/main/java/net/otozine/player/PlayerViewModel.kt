@@ -72,6 +72,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
         val transferring: DriveTransfer.Progress? = null,
         /** Minimised to a strip so the app stays usable while it runs. */
         val transferMinimised: Boolean = false,
+        val queueMode: QueueMode = QueueMode.ANTI_REPEAT,
         val pendingSync: Int = 0,
         val sleepTimerEndsAt: Long? = null,
         val importing: LibraryImporter.Progress? = null,
@@ -815,7 +816,27 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun setQueueMode(mode: QueueMode) = settings.setQueueMode(mode)
+
     fun playFrom(seed: Track?, size: Int = 40) {
+        // Plain shuffle when asked for it.
+        //
+        // The engine is the point of the app, but there are evenings where you
+        // want the library on random and no opinions about it -- and an engine
+        // you cannot turn off is one you have to trust rather than choose.
+        if (settings.state.value.queueMode == QueueMode.SHUFFLE) {
+            val pool = (_state.value.libraryTracks + _state.value.deviceTracks)
+                .filter { it.opusPath != null }
+            if (pool.isNotEmpty()) {
+                val ordered = listOfNotNull(seed) + (pool - setOfNotNull(seed)).shuffled()
+                playList(ordered, shuffle = false)
+                return
+            }
+        }
+        playFromEngine(seed, size)
+    }
+
+    private fun playFromEngine(seed: Track?, size: Int = 40) {
         viewModelScope.launch {
             val current = _state.value
 

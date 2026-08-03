@@ -71,8 +71,8 @@ val PaperColors = OtoColors(
 )
 
 val InkColors = OtoColors(
-    page = Color(0xFF26221D),
-    surface = Color(0xFF332E27),
+    page = Color(0x00000000),
+    surface = Color(0xF2332E27),
     sunken = Color(0xFF201C18),
     highlight = Color(0x12FFF6E6),
     shadow = Color(0x99000000),
@@ -170,7 +170,7 @@ enum class OtoPalette(
     val scene: Scene = Scene.NONE,
 ) {
     PAPER("Paper", "Warm off-white, soft shadows", PaperColors),
-    INK("Ink", "The same, after dark", InkColors),
+    INK("Ink", "Ink in dark water", InkColors, Scene.INK),
     DARK_NEO("Dark Neo", "True black, electric edges", DarkNeoColors),
     CHERRY("Cherry Blossom", "Falling petals", CherryBlossomColors, Scene.PETALS),
     GLASS("Glass", "Clear panels over colour", GlassColors, Scene.GLASS_LIGHT);

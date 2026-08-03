@@ -32,7 +32,7 @@ import kotlin.random.Random
  * refract without one, and falling petals are the entire point of the blossom
  * theme.
  */
-enum class Scene { NONE, GLASS_LIGHT, PETALS }
+enum class Scene { NONE, GLASS_LIGHT, PETALS, INK }
 
 /**
  * Whether the device has been told to stop animating.
@@ -98,6 +98,77 @@ fun ThemeScene(palette: OtoPalette?, modifier: Modifier = Modifier) {
         Scene.NONE -> Unit
         Scene.GLASS_LIGHT -> GlassBackdrop(modifier)
         Scene.PETALS -> PetalBackdrop(modifier)
+        Scene.INK -> InkBackdrop(modifier)
+    }
+}
+
+// -------------------------------------------------------------------- ink
+
+private class Bloom(random: Random) {
+    val x = 0.08f + random.nextFloat() * 0.84f
+    val y = 0.08f + random.nextFloat() * 0.84f
+    /** Where in its own life it starts, so they are not born together. */
+    val offset = random.nextFloat()
+    /** Seconds for one full bloom and fade. Slow: this is ink, not fireworks. */
+    val period = 14f + random.nextFloat() * 12f
+    val maxRadius = 0.22f + random.nextFloat() * 0.30f
+    val warm = random.nextFloat() < 0.35f
+}
+
+/**
+ * Ink dropped into dark water.
+ *
+ * Each bloom expands and fades on its own slow cycle. The trick to making it
+ * read as ink rather than as a pulsing circle is that the edge softens as it
+ * grows -- real ink loses definition as it disperses, so opacity falls faster
+ * than the radius rises, and the centre thins out first.
+ *
+ * Very slow on purpose. This sits behind a dark interface where the eye is
+ * reading small text, and anything quick in the periphery is read as movement
+ * to look at. Fourteen to twenty-six seconds a cycle is slow enough to notice
+ * only when you are not doing anything else.
+ */
+@Composable
+private fun InkBackdrop(modifier: Modifier = Modifier) {
+    val moving = animationsEnabled()
+    val blooms = remember { List(7) { Bloom(Random(it * 5381 + 7)) } }
+    val time = if (moving) frameClock() else 4f
+
+    Canvas(modifier.fillMaxSize()) {
+        drawRect(
+            Brush.verticalGradient(
+                0f to Color(0xFF17140F),
+                0.6f to Color(0xFF201B14),
+                1f to Color(0xFF15120D),
+            )
+        )
+
+        blooms.forEach { bloom ->
+            val life = ((time / bloom.period) + bloom.offset) % 1f
+            // Ease out: fast to spread, then almost still, the way ink behaves
+            // once it meets the water.
+            val spread = 1f - (1f - life) * (1f - life)
+            val radius = size.minDimension * bloom.maxRadius * spread
+            if (radius <= 1f) return@forEach
+
+            // Fades faster than it grows, and hollows as it goes.
+            val alpha = (1f - life).let { it * it } * 0.5f
+            val core = if (bloom.warm) Color(0xFFC8A26A) else Color(0xFF6FBFB8)
+
+            drawCircle(
+                Brush.radialGradient(
+                    listOf(
+                        core.copy(alpha = alpha * 0.10f),
+                        core.copy(alpha = alpha * 0.42f),
+                        core.copy(alpha = 0f),
+                    ),
+                    center = Offset(size.width * bloom.x, size.height * bloom.y),
+                    radius = radius,
+                ),
+                radius = radius,
+                center = Offset(size.width * bloom.x, size.height * bloom.y),
+            )
+        }
     }
 }
 

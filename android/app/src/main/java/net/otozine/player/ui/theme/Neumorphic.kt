@@ -126,6 +126,20 @@ private fun DrawScope.drawGlassSurface(
     recipe: Recipe,
 ) {
     val path = Path().apply { addOutline(outline) }
+    // Depth is carried by transparency, not only by shadow.
+    //
+    // Real glass gets more opaque as it thickens, so a raised panel should sit
+    // further from the backdrop than a recessed one. Drawing every surface at
+    // one opacity is what made the first version read as flat sheets of fog at
+    // varying heights -- the shadows said depth and the material contradicted
+    // them.
+    val thickness = when {
+        recipe.inset -> 0.72f
+        recipe.darkOffset.value >= 5f -> 1.18f      // RaisedHigh: nearest the eye
+        recipe.darkOffset.value >= 4f -> 1.05f
+        else -> 0.92f
+    }
+    val glass = fill.copy(alpha = (fill.alpha * thickness).coerceIn(0f, 1f))
     if (!recipe.inset) {
         drawIntoCanvas { canvas ->
             val paint = Paint().asFrameworkPaint().apply {
@@ -138,7 +152,18 @@ private fun DrawScope.drawGlassSurface(
             canvas.nativeCanvas.drawPath(path.asAndroidPath(), paint)
         }
     }
-    drawPath(path, fill)
+    drawPath(path, glass)
+
+    // A vertical gradient inside the panel: brighter where it faces the light,
+    // settling toward the fill below. Flat translucency has no orientation, and
+    // orientation is most of what tells the eye a surface is a surface.
+    drawPath(
+        path,
+        brush = Brush.verticalGradient(
+            0f to Color.White.copy(alpha = if (recipe.inset) 0.05f else 0.16f),
+            0.55f to Color.Transparent,
+        ),
+    )
 
     // The lit edge. Brighter at the top where light would land, fading out by
     // the middle -- a uniform border reads as a stroke, not as a surface.
