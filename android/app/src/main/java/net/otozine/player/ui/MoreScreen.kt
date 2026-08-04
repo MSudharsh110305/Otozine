@@ -232,8 +232,14 @@ fun MoreScreen(
                 Modifier.fillMaxWidth().padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                val measured = state.tracks.count { it.isAnalysed }
-                val total = state.tracks.size.coerceAtLeast(1)
+                // Distinct songs, not rows. Counting rows put "149 of 395"
+                // directly above "199 distinct songs", which reads as two
+                // different libraries.
+                val measured = remember(state.tracks) {
+                    val seen = HashSet<String>()
+                    state.tracks.filter { it.isAnalysed }.count { seen.add(it.dedupeKey) }
+                }
+                val total = state.playableCount.coerceAtLeast(1)
 
                 Row(
                     Modifier.fillMaxWidth(),

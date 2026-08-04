@@ -30,6 +30,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import net.otozine.player.ui.theme.pressable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
 import androidx.compose.ui.unit.dp
 import net.otozine.player.PlayerViewModel
 import net.otozine.player.Source
@@ -86,51 +88,57 @@ fun LibraryScreen(
     Column(Modifier.fillMaxSize()) {
         SearchBar(state.searchQuery, viewModel::search, placeholder = "Song name…")
 
-        if (available.size > 1) {
+        // One control row instead of three stacked ones.
+        //
+        // Source, view and the copy action were each on their own line, so the
+        // list started a third of the way down a screen whose whole job is the
+        // list. They are all "what am I looking at and what can I do with it",
+        // and they fit on one scrollable line.
+        val driveAttached = state.driveState == DriveWatcher.State.CONNECTED
+        val canCopy = source == Source.DEVICE && driveAttached && shown.isNotEmpty()
+
+        if (!selecting) {
             Row(
-                Modifier.horizontalScroll(rememberScrollState())
+                Modifier
+                    .horizontalScroll(rememberScrollState())
                     .padding(horizontal = 14.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                available.forEach { candidate ->
-                    Chip(
-                        label = when (candidate) {
-                            Source.LIBRARY -> "DRIVE · ${state.libraryTracks.size}"
-                            Source.DEVICE -> "PHONE · ${state.deviceTracks.size}"
-                            Source.ONLINE -> "ONLINE · ${state.remoteTracks.size}"
-                        },
-                        selected = candidate == source,
-                    ) {
-                        chosen = candidate; openMood = null
-                        selecting = false; selected = emptySet()
+                if (available.size > 1) {
+                    available.forEach { candidate ->
+                        Chip(
+                            label = when (candidate) {
+                                Source.LIBRARY -> "DRIVE"
+                                Source.DEVICE -> "PHONE"
+                                Source.ONLINE -> "ONLINE"
+                            },
+                            selected = candidate == source,
+                        ) {
+                            chosen = candidate; openMood = null
+                            selecting = false; selected = emptySet()
+                        }
+                    }
+                    Divider()
+                }
+                Chip("MOOD", groupBy == GroupBy.MOOD) {
+                    groupBy = GroupBy.MOOD; openMood = null
+                }
+                Chip("ALL", groupBy == GroupBy.ALL) {
+                    groupBy = GroupBy.ALL; openMood = null
+                }
+                if (canCopy) {
+                    Divider()
+                    Chip("COPY TO DRIVE", selected = false) {
+                        selecting = true; selected = emptySet()
                     }
                 }
             }
         }
 
-        // Offered only where it can actually be done: looking at phone music
-        // with the drive physically attached. `libraryPresent` was the wrong
-        // test -- it only means a library has been imported at some point, which
-        // stays true after the drive is unplugged, so the button survived the
-        // one condition it depended on.
-        val driveAttached = state.driveState == DriveWatcher.State.CONNECTED
-        val canCopy = source == Source.DEVICE && driveAttached && shown.isNotEmpty()
-
-        if (canCopy && !selecting) {
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Chip("CHOOSE SONGS TO COPY", selected = false) {
-                    selecting = true; selected = emptySet()
-                }
-            }
-        }
-
-        // Selection gets its own bar rather than more chips beside DRIVE/PHONE.
-        // Those chips answer "what am I looking at"; these are actions taken on
-        // it, and mixing the two made a row where adjacent controls did
-        // completely different kinds of thing.
+        // Selection replaces the row entirely rather than adding to it: while
+        // choosing songs, changing source or grouping would only lose the
+        // selection.
         if (canCopy && selecting) {
             val allShown = shown.map { it.id }.toSet()
             val everything = selected.containsAll(allShown)
@@ -144,8 +152,7 @@ fun LibraryScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        if (selected.isEmpty()) "NONE PICKED"
-                        else "${selected.size} PICKED",
+                        if (selected.isEmpty()) "NONE PICKED" else "${selected.size} PICKED",
                         style = Oto.type.label,
                         color = if (selected.isEmpty()) Oto.colors.ink3 else Oto.colors.teal,
                         modifier = Modifier.weight(1f),
@@ -190,19 +197,6 @@ fun LibraryScreen(
                 // library of rips they are recovered badly, so browsing by them
                 // sorts on noise. Mood is measured from the audio, so it is the
                 // one axis that stays correct however the files were named.
-                Row(
-                    Modifier.horizontalScroll(rememberScrollState())
-                        .padding(horizontal = 14.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Chip("BY MOOD", groupBy == GroupBy.MOOD) {
-                        groupBy = GroupBy.MOOD; openMood = null
-                    }
-                    Chip("ALL SONGS", groupBy == GroupBy.ALL) {
-                        groupBy = GroupBy.ALL; openMood = null
-                    }
-                }
-
                 when (groupBy) {
                     GroupBy.ALL -> FlatList(shown, state, viewModel, onTrackMenu)
                     GroupBy.MOOD -> MoodBrowser(
@@ -461,6 +455,17 @@ fun List<Track>.matching(query: String): List<Track> {
     val seen = HashSet<String>()
     return filter { it.displayTitle.lowercase().contains(needle) }
         .filter { seen.add(it.dedupeKey) }
+}
+
+/** A hairline between groups of chips, so the row reads as sections. */
+@Composable
+private fun Divider() {
+    Box(
+        Modifier
+            .padding(horizontal = 2.dp)
+            .size(width = 1.dp, height = 18.dp)
+            .background(Oto.colors.line)
+    )
 }
 
 @Composable

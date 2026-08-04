@@ -128,7 +128,7 @@ fun NowPlayingScreen(
             queueLabel,
             style = Oto.type.label,
             color = colors.teal,
-            modifier = Modifier.fillMaxWidth().clickable(onClick = onQueue),
+            modifier = Modifier.fillMaxWidth(),
         )
 
         VSpace(18.dp)

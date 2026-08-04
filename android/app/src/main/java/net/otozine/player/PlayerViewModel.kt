@@ -1169,9 +1169,14 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun closeOpenEvent() {
         val trackId = openTrackId ?: return
-        // Only analysed tracks feed the engine; recording plays for tracks it
-        // will never sequence would skew the cooldown model for no benefit.
-        if (trackId < 0) { openTrackId = null; return }
+        // Phone tracks count too.
+        //
+        // This discarded every play with a negative id, which is every track
+        // that came from the phone. Written when phone music could not be
+        // analysed and so could not be sequenced; it is measured into app data
+        // now, and on a phone-only library the rule threw away the entire
+        // history. Nothing could be learned, no favourite could emerge, and the
+        // skip model never had a row to train on.
 
         val played = ((controller?.currentPosition ?: 0L) - openStartPosition).coerceAtLeast(0L)
         val duration = _state.value.tracks.firstOrNull { it.id == trackId }?.durationMs ?: 0L
