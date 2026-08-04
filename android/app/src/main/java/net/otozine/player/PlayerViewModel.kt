@@ -91,7 +91,24 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
         val analysing: AnalysisWorker.Progress? = null,
     ) {
         /** Everything playable, whatever its source. */
-        val tracks: List<Track> get() = libraryTracks + deviceTracks + remoteTracks
+        /**
+         * Drive tracks that can actually be played right now.
+         *
+         * The library database is a copy kept on the phone, so its rows outlive
+         * the drive: unplug it and the app still listed two hundred songs whose
+         * audio sits on a device that is not there. Rows whose audio lives on
+         * the drive are hidden while it is away; rows copied to the phone stay,
+         * because those genuinely are here.
+         *
+         * The audio is not duplicated on the phone -- only the rows are, and
+         * they cost kilobytes.
+         */
+        val reachableLibraryTracks: List<Track>
+            get() = if (driveState == DriveWatcher.State.CONNECTED) libraryTracks
+            else libraryTracks.filter { it.opusPath?.startsWith("content://") != true }
+
+        val tracks: List<Track>
+            get() = reachableLibraryTracks + deviceTracks + remoteTracks
         /**
          * Distinct songs, not rows.
          *

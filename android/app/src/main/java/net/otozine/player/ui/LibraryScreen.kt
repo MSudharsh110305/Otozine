@@ -57,7 +57,8 @@ fun LibraryScreen(
     onTrackMenu: (Track) -> Unit = {},
 ) {
     val available = buildList {
-        add(Source.LIBRARY)
+        // Only offer the drive when its audio is actually reachable.
+        if (state.reachableLibraryTracks.isNotEmpty()) add(Source.LIBRARY)
         if (state.deviceTracks.isNotEmpty()) add(Source.DEVICE)
         if (state.remoteTracks.isNotEmpty()) add(Source.ONLINE)
     }
@@ -65,7 +66,7 @@ fun LibraryScreen(
     var chosen by remember { mutableStateOf<Source?>(null) }
     val source = chosen?.takeIf { it in available }
         ?: when {
-            state.libraryTracks.isNotEmpty() -> Source.LIBRARY
+            state.reachableLibraryTracks.isNotEmpty() -> Source.LIBRARY
             state.deviceTracks.isNotEmpty() -> Source.DEVICE
             state.remoteTracks.isNotEmpty() -> Source.ONLINE
             else -> Source.LIBRARY
@@ -77,7 +78,7 @@ fun LibraryScreen(
     var selected by remember { mutableStateOf(emptySet<Long>()) }
 
     val all = when (source) {
-        Source.LIBRARY -> state.libraryTracks
+        Source.LIBRARY -> state.reachableLibraryTracks
         Source.DEVICE -> state.deviceTracks
         Source.ONLINE -> state.remoteTracks
     }
@@ -98,10 +99,24 @@ fun LibraryScreen(
         val canCopy = source == Source.DEVICE && driveAttached && shown.isNotEmpty()
 
         if (!selecting) {
+            // Sits on the page colour rather than on nothing.
+            //
+            // The row is fixed while the grid scrolls beneath it, and with no
+            // surface of its own the cards passed straight through the gaps
+            // between chips -- half a mood tile visible behind a control, which
+            // reads as a rendering fault rather than as a layer.
+            //
+            // `surface`, not `page`: scene themes leave the page transparent on
+            // purpose, so filling with it would change nothing on exactly the
+            // themes where the bleed-through is worst. Surface is opaque where
+            // the theme is flat and frosted where it is glass, which is the
+            // right answer in both.
             Row(
                 Modifier
+                    .fillMaxWidth()
+                    .background(Oto.colors.surface)
                     .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 14.dp, vertical = 6.dp),
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

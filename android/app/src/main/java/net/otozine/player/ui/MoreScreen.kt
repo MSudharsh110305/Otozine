@@ -273,7 +273,7 @@ fun MoreScreen(
 
                 SplitBar(
                     parts = listOf(
-                        Triple("drive", state.libraryTracks.size, Oto.colors.teal),
+                        Triple("drive", state.reachableLibraryTracks.size, Oto.colors.teal),
                         Triple("phone", state.deviceTracks.size, Oto.colors.sky),
                         Triple("online", state.remoteTracks.size, Oto.colors.ink3),
                     ),
