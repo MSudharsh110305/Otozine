@@ -90,7 +90,7 @@ private fun Field(
     Column {
         Text(label, style = Oto.type.micro, color = Oto.colors.ink3)
         VSpace(5.dp)
-        NeuWell(Modifier.fillMaxWidth(), radius = 13.dp) {
+        NeuWell(Modifier.fillMaxWidth(), radius = 12.dp) {
             Box(Modifier.padding(horizontal = 14.dp, vertical = 13.dp)) {
                 if (value.isEmpty() && placeholder.isNotEmpty()) {
                     Text(placeholder, style = Oto.type.sub, color = Oto.colors.ink3)

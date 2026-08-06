@@ -76,7 +76,7 @@ fun Sheet(
             Modifier
                 .fillMaxWidth()
                 .padding(12.dp)
-                .neu(Depth.Raised, RoundedCornerShape(26.dp))
+                .neu(Depth.Raised, RoundedCornerShape(22.dp))
                 .clickable(enabled = false) {}
                 .padding(18.dp),
         ) {
@@ -206,12 +206,12 @@ private fun QueueRow(
             .padding(vertical = 3.dp)
             .let {
                 when {
-                    dragging -> it.neu(Depth.RaisedHigh, RoundedCornerShape(13.dp))
-                    isCurrent -> it.neu(Depth.Inset, RoundedCornerShape(13.dp))
+                    dragging -> it.neu(Depth.RaisedHigh, RoundedCornerShape(12.dp))
+                    isCurrent -> it.neu(Depth.Inset, RoundedCornerShape(12.dp))
                     else -> it
                 }
             }
-            .clip(RoundedCornerShape(13.dp))
+            .clip(RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(start = 12.dp, end = 4.dp, top = 9.dp, bottom = 9.dp),
         verticalAlignment = Alignment.CenterVertically,

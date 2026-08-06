@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import net.otozine.player.ui.theme.Depth
+import net.otozine.player.ui.theme.Dimens
 import net.otozine.player.ui.theme.Oto
 import net.otozine.player.ui.theme.neu
 
@@ -50,7 +51,7 @@ fun <T> Segmented(
     modifier: Modifier = Modifier,
     /** Fixed width per segment. Null fills whatever width it is given. */
     segmentWidth: androidx.compose.ui.unit.Dp? = null,
-    height: androidx.compose.ui.unit.Dp = 32.dp,
+    height: androidx.compose.ui.unit.Dp = Dimens.control,
     onSelect: (T) -> Unit,
 ) {
     if (options.isEmpty()) return

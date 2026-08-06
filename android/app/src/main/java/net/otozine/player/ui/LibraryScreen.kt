@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -49,6 +50,7 @@ import net.otozine.player.ui.components.SectionHeader
 import net.otozine.player.ui.components.TrackRow
 import net.otozine.player.ui.components.VSpace
 import net.otozine.player.ui.theme.Depth
+import net.otozine.player.ui.theme.Dimens
 import net.otozine.player.ui.theme.Oto
 import net.otozine.player.ui.theme.headerFill
 import net.otozine.player.ui.theme.neu
@@ -111,7 +113,8 @@ fun LibraryScreen(
             Modifier
                 .fillMaxWidth()
                 .background(Oto.colors.headerFill())
-                .padding(horizontal = 14.dp, vertical = 7.dp),
+                .height(Dimens.control)
+            .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -348,8 +351,8 @@ private fun MoodTile(
         Modifier
             .fillMaxWidth()
             .pressable(interaction)
-            .neu(Depth.RaisedSoft, RoundedCornerShape(18.dp))
-            .clip(RoundedCornerShape(18.dp))
+            .neu(Depth.RaisedSoft, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
             .clickable(interactionSource = interaction, indication = null, onClick = onOpen)
             .padding(start = 8.dp, end = 14.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -498,7 +501,9 @@ fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
             .neu(if (selected) Depth.Inset else Depth.RaisedSoft, RoundedCornerShape(50))
             .clip(RoundedCornerShape(50))
             .clickable(interactionSource = interaction, indication = null, onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 7.dp),
+            .height(Dimens.control)
+            .padding(horizontal = 16.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             label,

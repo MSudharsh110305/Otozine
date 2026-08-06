@@ -312,12 +312,12 @@ private fun BottomNav(selected: Tab, onSelect: (Tab) -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .clickable { onSelect(entry) }
                     .let {
                         // Active tab is pressed *into* the bar rather than
                         // highlighted -- depth is the state signal here.
-                        if (active) it.neu(Depth.Inset, RoundedCornerShape(14.dp)) else it
+                        if (active) it.neu(Depth.Inset, RoundedCornerShape(16.dp)) else it
                     }
                     .padding(horizontal = 22.dp, vertical = 6.dp),
             ) {
@@ -350,8 +350,8 @@ private fun MiniPlayer(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 14.dp)
-            .neu(Depth.Raised, RoundedCornerShape(18.dp))
-            .clip(RoundedCornerShape(18.dp))
+            .neu(Depth.Raised, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onExpand)
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically,

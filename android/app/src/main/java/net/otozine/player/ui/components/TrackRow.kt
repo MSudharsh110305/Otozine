@@ -83,9 +83,9 @@ fun TrackRow(
             .let {
                 // The playing row is raised out of the page; the rest sit flat
                 // on it. Depth carries the state, so no accent bar is needed.
-                if (isCurrent) it.neu(Depth.RaisedSoft, RoundedCornerShape(15.dp)) else it
+                if (isCurrent) it.neu(Depth.RaisedSoft, RoundedCornerShape(16.dp)) else it
             }
-            .clip(RoundedCornerShape(15.dp))
+            .clip(RoundedCornerShape(16.dp))
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongPress,

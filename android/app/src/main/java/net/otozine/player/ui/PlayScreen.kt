@@ -229,13 +229,13 @@ private fun HeroCard(track: Track, reason: String, artPath: String?, onPlay: () 
         onClick = onPlay,
     ) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(92.dp).neu(Depth.Inset, RoundedCornerShape(18.dp))) {
+            Box(Modifier.size(92.dp).neu(Depth.Inset, RoundedCornerShape(16.dp))) {
                 ArtTile(
                     artKey = track.contentHash,
                     title = track.displayTitle,
                     bitmap = rememberArt(artPath, artPx),
                     modifier = Modifier.size(92.dp).padding(4.dp),
-                    radius = 15.dp,
+                    radius = 16.dp,
                 )
             }
             Column(Modifier.padding(start = 14.dp)) {

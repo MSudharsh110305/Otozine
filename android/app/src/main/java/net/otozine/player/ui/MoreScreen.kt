@@ -322,7 +322,7 @@ fun MoreScreen(
 
 @Composable
 private fun Group(content: @Composable () -> Unit) {
-    NeuCard(Modifier.fillMaxWidth().padding(horizontal = 14.dp), radius = 20.dp) { content() }
+    NeuCard(Modifier.fillMaxWidth().padding(horizontal = 14.dp), radius = 22.dp) { content() }
 }
 
 /**
@@ -359,7 +359,7 @@ private fun PaletteSwatch(
             Modifier
                 .fillMaxWidth()
                 .height(62.dp)
-                .clip(RoundedCornerShape(14.dp))
+                .clip(RoundedCornerShape(16.dp))
                 .background(
                     // Scene themes leave the page transparent, so preview the
                     // colour their backdrop actually paints.
@@ -372,7 +372,7 @@ private fun PaletteSwatch(
                 .border(
                     width = if (selected) 2.dp else 1.dp,
                     color = if (selected) Oto.colors.teal else Oto.colors.line,
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(16.dp),
                 ),
             contentAlignment = Alignment.Center,
         ) {
@@ -422,7 +422,7 @@ private fun PaletteSwatch(
 private fun Pip(value: String, caption: String, modifier: Modifier = Modifier) {
     Column(
         modifier
-            .neu(Depth.Inset, RoundedCornerShape(14.dp))
+            .neu(Depth.Inset, RoundedCornerShape(16.dp))
             .padding(vertical = 11.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -440,8 +440,8 @@ private fun ThemeOption(
 ) {
     Box(
         modifier
-            .neu(if (selected) Depth.Inset else Depth.RaisedSoft, RoundedCornerShape(14.dp))
-            .clip(RoundedCornerShape(14.dp))
+            .neu(if (selected) Depth.Inset else Depth.RaisedSoft, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 14.dp),
         contentAlignment = Alignment.Center,

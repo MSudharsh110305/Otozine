@@ -64,7 +64,7 @@ fun MapScreen(state: PlayerViewModel.UiState, viewModel: PlayerViewModel) {
                 .fillMaxWidth()
                 .padding(horizontal = 14.dp)
                 .aspectRatio(1f)
-                .neu(Depth.InsetDeep, RoundedCornerShape(24.dp))
+                .neu(Depth.InsetDeep, RoundedCornerShape(22.dp))
         ) {
             Canvas(
                 Modifier

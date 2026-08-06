@@ -33,7 +33,7 @@ fun SearchBar(
 ) {
     val colors = Oto.colors
 
-    NeuWell(modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 3.dp), radius = 15.dp) {
+    NeuWell(modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 3.dp), radius = 16.dp) {
         Row(
             Modifier.padding(horizontal = 15.dp, vertical = 9.dp),
             verticalAlignment = Alignment.CenterVertically,

@@ -122,7 +122,7 @@ fun DriveBanner(onReconnect: () -> Unit) {
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 14.dp, vertical = 4.dp)
-            .background(Oto.colors.sunken, RoundedCornerShape(14.dp))
+            .background(Oto.colors.sunken, RoundedCornerShape(16.dp))
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

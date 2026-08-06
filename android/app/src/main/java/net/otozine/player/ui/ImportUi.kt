@@ -58,7 +58,7 @@ fun ImportOverlay(progress: LibraryImporter.Progress, onDismiss: () -> Unit) {
         Modifier.fillMaxSize().background(colors.scrim()),
         contentAlignment = Alignment.Center,
     ) {
-        NeuCard(Modifier.fillMaxWidth().padding(26.dp), radius = 24.dp) {
+        NeuCard(Modifier.fillMaxWidth().padding(26.dp), radius = 22.dp) {
             Column(
                 Modifier.padding(22.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),

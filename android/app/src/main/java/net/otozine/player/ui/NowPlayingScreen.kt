@@ -158,7 +158,7 @@ fun NowPlayingScreen(
                 title = track.displayTitle,
                 bitmap = rememberArt(artPath, artPx),
                 modifier = Modifier.fillMaxSize(),
-                radius = 20.dp,
+                radius = 22.dp,
             )
         }
 
@@ -240,7 +240,7 @@ fun NowPlayingScreen(
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .neu(Depth.Inset, RoundedCornerShape(14.dp))
+                    .neu(Depth.Inset, RoundedCornerShape(16.dp))
                     .padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -274,8 +274,8 @@ private fun FooterAction(icon: Icon, label: String, onClick: () -> Unit) {
     // the word for the two that are not obvious from their shape alone.
     Column(
         Modifier
-            .neu(Depth.RaisedSoft, RoundedCornerShape(18.dp))
-            .clip(RoundedCornerShape(18.dp))
+            .neu(Depth.RaisedSoft, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 9.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
