@@ -38,6 +38,7 @@ import net.otozine.player.Source
 import net.otozine.player.library.DriveWatcher
 import net.otozine.player.library.Track
 import net.otozine.player.ui.components.NeuCard
+import net.otozine.player.ui.components.Segmented
 import net.otozine.player.ui.components.SectionHeader
 import net.otozine.player.ui.components.TrackRow
 import net.otozine.player.ui.components.VSpace
@@ -89,100 +90,91 @@ fun LibraryScreen(
     Column(Modifier.fillMaxSize()) {
         SearchBar(state.searchQuery, viewModel::search, placeholder = "Song name…")
 
-        // One control row instead of three stacked ones.
-        //
-        // Source, view and the copy action were each on their own line, so the
-        // list started a third of the way down a screen whose whole job is the
-        // list. They are all "what am I looking at and what can I do with it",
-        // and they fit on one scrollable line.
         val driveAttached = state.driveState == DriveWatcher.State.CONNECTED
         val canCopy = source == Source.DEVICE && driveAttached && shown.isNotEmpty()
 
-        if (!selecting) {
-            // Sits on the page colour rather than on nothing.
-            //
-            // The row is fixed while the grid scrolls beneath it, and with no
-            // surface of its own the cards passed straight through the gaps
-            // between chips -- half a mood tile visible behind a control, which
-            // reads as a rendering fault rather than as a layer.
-            //
-            // `surface`, not `page`: scene themes leave the page transparent on
-            // purpose, so filling with it would change nothing on exactly the
-            // themes where the bleed-through is worst. Surface is opaque where
-            // the theme is flat and frosted where it is glass, which is the
-            // right answer in both.
+        // The header is one block on one surface, not a stack of loose rows.
+        //
+        // Previously source, grouping and the copy action were three scrolling
+        // chip rows. Chips read as independent toggles, so a row of them gave no
+        // sense that picking one dropped another; scrolled sideways the selected
+        // option could be off screen entirely; and with no surface behind them
+        // the grid showed through the gaps. Now: one segmented control for where
+        // the music is, one for how it is shown, and the action on its own line
+        // where it cannot crowd either.
+        if (!selecting) Column(
+            Modifier
+                .fillMaxWidth()
+                .background(Oto.colors.surface)
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(9.dp),
+        ) {
+            if (available.size > 1) {
+                Segmented(
+                    options = available.map { candidate ->
+                        candidate to when (candidate) {
+                            Source.LIBRARY -> "DRIVE"
+                            Source.DEVICE -> "PHONE"
+                            Source.ONLINE -> "ONLINE"
+                        }
+                    },
+                    selected = source,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    chosen = it; openMood = null
+                    selecting = false; selected = emptySet()
+                }
+            }
+
             Row(
-                Modifier
-                    .fillMaxWidth()
-                    .background(Oto.colors.surface)
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (available.size > 1) {
-                    available.forEach { candidate ->
-                        Chip(
-                            label = when (candidate) {
-                                Source.LIBRARY -> "DRIVE"
-                                Source.DEVICE -> "PHONE"
-                                Source.ONLINE -> "ONLINE"
-                            },
-                            selected = candidate == source,
-                        ) {
-                            chosen = candidate; openMood = null
-                            selecting = false; selected = emptySet()
-                        }
-                    }
-                    Divider()
-                }
-                Chip("MOOD", groupBy == GroupBy.MOOD) {
-                    groupBy = GroupBy.MOOD; openMood = null
-                }
-                Chip("ALL", groupBy == GroupBy.ALL) {
-                    groupBy = GroupBy.ALL; openMood = null
-                }
+                Segmented(
+                    options = listOf(GroupBy.MOOD to "BY MOOD", GroupBy.ALL to "ALL SONGS"),
+                    selected = groupBy,
+                    modifier = Modifier.weight(1f),
+                ) { groupBy = it; openMood = null }
+
                 if (canCopy) {
-                    Divider()
-                    Chip("COPY TO DRIVE", selected = false) {
+                    Chip("COPY", selected = false) {
                         selecting = true; selected = emptySet()
                     }
                 }
             }
         }
 
-        // Selection replaces the row entirely rather than adding to it: while
-        // choosing songs, changing source or grouping would only lose the
-        // selection.
+        // Selecting replaces the header rather than adding a row to it: while
+        // choosing songs, changing source or grouping could only lose the
+        // selection, so the controls that would do that go away.
         if (canCopy && selecting) {
             val allShown = shown.map { it.id }.toSet()
             val everything = selected.containsAll(allShown)
-            NeuCard(
-                Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp),
-                radius = 16.dp,
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .background(Oto.colors.surface)
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(9.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(9.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        if (selected.isEmpty()) "NONE PICKED" else "${selected.size} PICKED",
-                        style = Oto.type.label,
-                        color = if (selected.isEmpty()) Oto.colors.ink3 else Oto.colors.teal,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Chip(if (everything) "NONE" else "ALL", selected = false) {
-                        selected = if (everything) emptySet() else allShown
-                    }
-                    Chip("CANCEL", selected = false) {
+                Text(
+                    if (selected.isEmpty()) "PICK SONGS" else "${selected.size} PICKED",
+                    style = Oto.type.label,
+                    color = if (selected.isEmpty()) Oto.colors.ink3 else Oto.colors.teal,
+                    modifier = Modifier.weight(1f),
+                )
+                Chip(if (everything) "NONE" else "ALL", selected = false) {
+                    selected = if (everything) emptySet() else allShown
+                }
+                Chip("CANCEL", selected = false) {
+                    selecting = false; selected = emptySet()
+                }
+                Chip("COPY ${selected.size}", selected = selected.isNotEmpty()) {
+                    if (selected.isNotEmpty()) {
+                        viewModel.copyToDrive(shown.filter { it.id in selected })
                         selecting = false; selected = emptySet()
-                    }
-                    Chip("COPY", selected = selected.isNotEmpty()) {
-                        if (selected.isNotEmpty()) {
-                            viewModel.copyToDrive(shown.filter { it.id in selected })
-                            selecting = false; selected = emptySet()
-                        }
                     }
                 }
             }
@@ -470,17 +462,6 @@ fun List<Track>.matching(query: String): List<Track> {
     val seen = HashSet<String>()
     return filter { it.displayTitle.lowercase().contains(needle) }
         .filter { seen.add(it.dedupeKey) }
-}
-
-/** A hairline between groups of chips, so the row reads as sections. */
-@Composable
-private fun Divider() {
-    Box(
-        Modifier
-            .padding(horizontal = 2.dp)
-            .size(width = 1.dp, height = 18.dp)
-            .background(Oto.colors.line)
-    )
 }
 
 @Composable
