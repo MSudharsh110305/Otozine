@@ -314,7 +314,7 @@ private fun MoodBrowser(
 
     LazyColumn(
         contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
         items(groups, key = { it.first }) { (label, tracks) ->
@@ -351,11 +351,11 @@ private fun MoodTile(
             .neu(Depth.RaisedSoft, RoundedCornerShape(18.dp))
             .clip(RoundedCornerShape(18.dp))
             .clickable(interactionSource = interaction, indication = null, onClick = onOpen)
-            .padding(start = 12.dp, end = 14.dp, top = 10.dp, bottom = 10.dp),
+            .padding(start = 8.dp, end = 14.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(13.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        CoverStack(tracks.take(3), viewModel)
+        Cover(tracks.firstOrNull(), viewModel)
 
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
@@ -372,29 +372,30 @@ private fun MoodTile(
 }
 
 /**
- * Three covers fanned behind each other.
+ * The face of a mood: one cover.
  *
- * Overlapping rather than laid in a row: the stack says "a set of these" in
- * roughly the space one cover takes, and drawing back-to-front keeps the
- * nearest one whole.
+ * Three fanned behind each other was the first attempt, and it only worked
+ * where every track had artwork. Most of this library has none, so it drew
+ * three generated letter tiles overlapping by nine pixels -- an unreadable
+ * smear, worse than showing nothing at all. One cover stays legible whether it
+ * is real artwork or a generated tile, which is the only version that survives
+ * the library this actually has.
  */
 @Composable
-private fun CoverStack(tracks: List<Track>, viewModel: PlayerViewModel) {
+private fun Cover(track: Track?, viewModel: PlayerViewModel) {
     val artPx = with(LocalDensity.current) { 52.dp.roundToPx() }
-    Box(Modifier.size(width = 64.dp, height = 46.dp)) {
-        tracks.reversed().forEachIndexed { index, track ->
-            val fromBack = tracks.size - 1 - index
-            ArtTile(
-                artKey = track.contentHash,
-                title = track.displayTitle,
-                bitmap = rememberArt(viewModel.artPathFor(track), artPx),
-                modifier = Modifier.padding(start = (fromBack * 9).dp).size(46.dp),
-                radius = 11.dp,
-            )
-        }
+    if (track == null) {
+        Box(Modifier.size(46.dp))
+        return
     }
+    ArtTile(
+        artKey = track.contentHash,
+        title = track.displayTitle,
+        bitmap = rememberArt(viewModel.artPathFor(track), artPx),
+        modifier = Modifier.size(46.dp),
+        radius = 12.dp,
+    )
 }
-
 
 @Composable
 private fun FlatList(
