@@ -47,6 +47,9 @@ fun <T> Segmented(
     options: List<Pair<T, String>>,
     selected: T,
     modifier: Modifier = Modifier,
+    /** Fixed width per segment. Null fills whatever width it is given. */
+    segmentWidth: androidx.compose.ui.unit.Dp? = null,
+    height: androidx.compose.ui.unit.Dp = 32.dp,
     onSelect: (T) -> Unit,
 ) {
     if (options.isEmpty()) return
@@ -62,18 +65,22 @@ fun <T> Segmented(
 
     BoxWithConstraints(
         modifier
-            .height(38.dp)
+            .then(
+                if (segmentWidth != null) Modifier.width(segmentWidth * options.size)
+                else Modifier
+            )
+            .height(height)
             .neu(Depth.Inset, RoundedCornerShape(50)),
     ) {
-        val segmentWidth = maxWidth / options.size
+        val slot = segmentWidth ?: (maxWidth / options.size)
 
         // The thumb, drawn under the labels so text never sits on an edge.
         Box(
             Modifier
-                .offset(x = segmentWidth * position)
-                .width(segmentWidth)
+                .offset(x = slot * position)
+                .width(slot)
                 .fillMaxHeight()
-                .padding(3.dp)
+                .padding(2.5.dp)
                 .neu(Depth.RaisedSoft, RoundedCornerShape(50))
         )
 
@@ -82,7 +89,7 @@ fun <T> Segmented(
                 val interaction = remember { MutableInteractionSource() }
                 Box(
                     Modifier
-                        .width(segmentWidth)
+                        .width(slot)
                         .fillMaxHeight()
                         .clickable(
                             interactionSource = interaction,

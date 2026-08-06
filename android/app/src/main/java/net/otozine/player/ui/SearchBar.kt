@@ -33,9 +33,9 @@ fun SearchBar(
 ) {
     val colors = Oto.colors
 
-    NeuWell(modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 4.dp), radius = 15.dp) {
+    NeuWell(modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 3.dp), radius = 15.dp) {
         Row(
-            Modifier.padding(horizontal = 15.dp, vertical = 12.dp),
+            Modifier.padding(horizontal = 15.dp, vertical = 9.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             OtoIcon(Icon.SEARCH, tint = colors.ink3, size = 17.dp)

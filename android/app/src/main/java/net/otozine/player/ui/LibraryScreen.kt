@@ -93,21 +93,20 @@ fun LibraryScreen(
         val driveAttached = state.driveState == DriveWatcher.State.CONNECTED
         val canCopy = source == Source.DEVICE && driveAttached && shown.isNotEmpty()
 
-        // The header is one block on one surface, not a stack of loose rows.
+        // One line, not three.
         //
-        // Previously source, grouping and the copy action were three scrolling
-        // chip rows. Chips read as independent toggles, so a row of them gave no
-        // sense that picking one dropped another; scrolled sideways the selected
-        // option could be off screen entirely; and with no surface behind them
-        // the grid showed through the gaps. Now: one segmented control for where
-        // the music is, one for how it is shown, and the action on its own line
-        // where it cannot crowd either.
-        if (!selecting) Column(
+        // Everything here is "what am I looking at" -- where the music is, and
+        // how it is grouped -- so it belongs on one line. Stacked, it pushed the
+        // list a third of the way down a screen whose entire job is the list.
+        // Segments size to their labels rather than stretching, so the row stays
+        // as small as the words in it.
+        if (!selecting) Row(
             Modifier
                 .fillMaxWidth()
                 .background(Oto.colors.surface)
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(9.dp),
+                .padding(horizontal = 14.dp, vertical = 7.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             if (available.size > 1) {
                 Segmented(
@@ -119,28 +118,24 @@ fun LibraryScreen(
                         }
                     },
                     selected = source,
-                    modifier = Modifier.fillMaxWidth(),
+                    segmentWidth = 58.dp,
                 ) {
                     chosen = it; openMood = null
                     selecting = false; selected = emptySet()
                 }
             }
 
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Segmented(
-                    options = listOf(GroupBy.MOOD to "BY MOOD", GroupBy.ALL to "ALL SONGS"),
-                    selected = groupBy,
-                    modifier = Modifier.weight(1f),
-                ) { groupBy = it; openMood = null }
+            Segmented(
+                options = listOf(GroupBy.MOOD to "MOOD", GroupBy.ALL to "ALL"),
+                selected = groupBy,
+                segmentWidth = 46.dp,
+            ) { groupBy = it; openMood = null }
 
-                if (canCopy) {
-                    Chip("COPY", selected = false) {
-                        selecting = true; selected = emptySet()
-                    }
+            Box(Modifier.weight(1f))
+
+            if (canCopy) {
+                Chip("COPY", selected = false) {
+                    selecting = true; selected = emptySet()
                 }
             }
         }
@@ -473,7 +468,7 @@ fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
             .neu(if (selected) Depth.Inset else Depth.RaisedSoft, RoundedCornerShape(50))
             .clip(RoundedCornerShape(50))
             .clickable(interactionSource = interaction, indication = null, onClick = onClick)
-            .padding(horizontal = 15.dp, vertical = 9.dp),
+            .padding(horizontal = 14.dp, vertical = 7.dp),
     ) {
         Text(
             label,
