@@ -195,6 +195,23 @@ fun OtoColors.scrim(): Color =
     else Color(0xF7FFFFFF).compositeOver(surface)
 
 /**
+ * Fill for a bar that stays put while content scrolls under it.
+ *
+ * Opaque, always. Translucency here needs a backdrop blur to work, and Compose
+ * cannot sample what is painted behind a composable without rendering the
+ * background into a layer every frame -- for a scrolling list that is a
+ * full-screen readback per frame. Without the blur the list simply shows
+ * through, and a half-visible song title behind the controls reads as a
+ * rendering fault.
+ *
+ * Scene themes leave `page` transparent, so the surface is composited over an
+ * opaque base drawn from the same palette rather than over nothing.
+ */
+fun OtoColors.headerFill(): Color =
+    if (isDark) surface.compositeOver(Color(0xFF14161C))
+    else surface.compositeOver(Color(0xFFF3F1F6))
+
+/**
  * Tints for generated cover art.
  *
  * Most of the library has no artwork -- YouTube rips arrive bare, and online

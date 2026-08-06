@@ -41,6 +41,8 @@ import net.otozine.player.ui.components.Icon
 import net.otozine.player.ui.components.OtoIcon
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
+import net.otozine.player.ui.components.ArtTile
+import androidx.compose.ui.platform.LocalDensity
 import net.otozine.player.ui.components.NeuCard
 import net.otozine.player.ui.components.Segmented
 import net.otozine.player.ui.components.SectionHeader
@@ -48,6 +50,7 @@ import net.otozine.player.ui.components.TrackRow
 import net.otozine.player.ui.components.VSpace
 import net.otozine.player.ui.theme.Depth
 import net.otozine.player.ui.theme.Oto
+import net.otozine.player.ui.theme.headerFill
 import net.otozine.player.ui.theme.neu
 
 /** How the list is broken up. */
@@ -107,7 +110,7 @@ fun LibraryScreen(
         if (!selecting) Row(
             Modifier
                 .fillMaxWidth()
-                .background(Oto.colors.surface)
+                .background(Oto.colors.headerFill())
                 .padding(horizontal = 14.dp, vertical = 7.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -156,7 +159,7 @@ fun LibraryScreen(
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .background(Oto.colors.surface)
+                    .background(Oto.colors.headerFill())
                     .padding(horizontal = 14.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(9.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -309,94 +312,89 @@ private fun MoodBrowser(
         return
     }
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        contentPadding = PaddingValues(14.dp),
-        horizontalArrangement = Arrangement.spacedBy(11.dp),
-        verticalArrangement = Arrangement.spacedBy(11.dp),
+    LazyColumn(
+        contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
         items(groups, key = { it.first }) { (label, tracks) ->
-            MoodTile(
-                label = label,
-                count = tracks.size,
-                onOpen = { onOpen(label) },
-                onPlay = { viewModel.playFrom(tracks.firstOrNull()) },
-            )
+            MoodTile(label = label, tracks = tracks, viewModel = viewModel) { onOpen(label) }
         }
     }
 }
 
-/** One mood, sized so a dozen of them read as a palette rather than a list. */
+/**
+ * One mood, as a row with the music in it.
+ *
+ * The grid this replaces gave each mood a card the height of a paperback
+ * holding one word, a count and a button. Eight of them filled the screen and
+ * said almost nothing, because a mood is not a thing you look at -- it is a set
+ * of songs. So the row shows the songs: three covers fanned out, which turns an
+ * abstract label into something recognisable before it is read.
+ *
+ * No play button. The row opens the mood, which is what you want nine times out
+ * of ten, and the tenth is one more tap. A button on every row asks you to
+ * decide before you have seen what is inside.
+ */
 @Composable
 private fun MoodTile(
     label: String,
-    count: Int,
+    tracks: List<Track>,
+    viewModel: PlayerViewModel,
     onOpen: () -> Unit,
-    onPlay: () -> Unit,
 ) {
-    NeuCard(Modifier.fillMaxWidth(), radius = 20.dp) {
-        Column(
-            Modifier
-                .clickable(onClick = onOpen)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
+    val interaction = remember { MutableInteractionSource() }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .pressable(interaction)
+            .neu(Depth.RaisedSoft, RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(18.dp))
+            .clickable(interactionSource = interaction, indication = null, onClick = onOpen)
+            .padding(start = 12.dp, end = 14.dp, top = 10.dp, bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(13.dp),
+    ) {
+        CoverStack(tracks.take(3), viewModel)
+
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                label.replaceFirstChar { it.uppercase() },
-                style = Oto.type.title,
+                label.lowercase().replaceFirstChar { it.uppercase() },
+                style = Oto.type.item,
                 color = Oto.colors.ink,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Text(
-                "$count ${if (count == 1) "song" else "songs"}",
-                style = Oto.type.micro,
-                color = Oto.colors.ink3,
+            Text("${tracks.size} songs", style = Oto.type.micro, color = Oto.colors.ink3)
+        }
+        OtoIcon(Icon.CHEVRON, tint = Oto.colors.ink3, size = 14.dp)
+    }
+}
+
+/**
+ * Three covers fanned behind each other.
+ *
+ * Overlapping rather than laid in a row: the stack says "a set of these" in
+ * roughly the space one cover takes, and drawing back-to-front keeps the
+ * nearest one whole.
+ */
+@Composable
+private fun CoverStack(tracks: List<Track>, viewModel: PlayerViewModel) {
+    val artPx = with(LocalDensity.current) { 52.dp.roundToPx() }
+    Box(Modifier.size(width = 64.dp, height = 46.dp)) {
+        tracks.reversed().forEachIndexed { index, track ->
+            val fromBack = tracks.size - 1 - index
+            ArtTile(
+                artKey = track.contentHash,
+                title = track.displayTitle,
+                bitmap = rememberArt(viewModel.artPathFor(track), artPx),
+                modifier = Modifier.padding(start = (fromBack * 9).dp).size(46.dp),
+                radius = 11.dp,
             )
-            VSpace(2.dp)
-            Chip("PLAY", selected = false, onClick = onPlay)
         }
     }
 }
 
-@Composable
-private fun GroupHeader(
-    label: String,
-    count: Int,
-    expanded: Boolean,
-    onClick: () -> Unit,
-    onPlay: () -> Unit,
-) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 4.dp)
-            .let { if (expanded) it.neu(Depth.Inset, RoundedCornerShape(14.dp)) else it }
-            .clip(RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 13.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            label,
-            style = Oto.type.label,
-            color = if (expanded) Oto.colors.teal else Oto.colors.ink,
-        )
-        Text(
-            "  $count",
-            style = Oto.type.data,
-            color = Oto.colors.ink3,
-        )
-        Box(Modifier.weight(1f))
-        Text(
-            "PLAY",
-            style = Oto.type.micro,
-            color = Oto.colors.teal,
-            modifier = Modifier.clickable(onClick = onPlay).padding(6.dp),
-        )
-    }
-}
 
 @Composable
 private fun FlatList(
