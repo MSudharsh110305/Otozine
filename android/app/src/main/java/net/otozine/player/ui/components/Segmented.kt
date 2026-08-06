@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
@@ -44,7 +45,7 @@ import net.otozine.player.ui.theme.neu
  */
 @Composable
 fun <T> Segmented(
-    options: List<Pair<T, String>>,
+    options: List<Triple<T, String, Icon?>>,
     selected: T,
     modifier: Modifier = Modifier,
     /** Fixed width per segment. Null fills whatever width it is given. */
@@ -85,8 +86,10 @@ fun <T> Segmented(
         )
 
         Row(Modifier.fillMaxWidth().fillMaxHeight()) {
-            options.forEachIndexed { i, (value, label) ->
+            options.forEachIndexed { i, option ->
+                val (value, label, icon) = option
                 val interaction = remember { MutableInteractionSource() }
+                val tint = if (i == index) Oto.colors.teal else Oto.colors.ink3
                 Box(
                     Modifier
                         .width(slot)
@@ -97,14 +100,26 @@ fun <T> Segmented(
                         ) { onSelect(value) },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        label,
-                        style = Oto.type.label,
-                        color = if (i == index) Oto.colors.teal else Oto.colors.ink3,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center,
-                    )
+                    if (icon != null && label.isEmpty()) {
+                        // Icon alone, where the shape is unambiguous. A label
+                        // beside a grid icon only repeats what the grid says.
+                        OtoIcon(icon, tint = tint, size = 16.dp)
+                    } else {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(5.dp),
+                        ) {
+                            if (icon != null) OtoIcon(icon, tint = tint, size = 14.dp)
+                            Text(
+                                label,
+                                style = Oto.type.label,
+                                color = tint,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
                 }
             }
         }

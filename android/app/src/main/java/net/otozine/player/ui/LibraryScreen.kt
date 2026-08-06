@@ -37,6 +37,10 @@ import net.otozine.player.PlayerViewModel
 import net.otozine.player.Source
 import net.otozine.player.library.DriveWatcher
 import net.otozine.player.library.Track
+import net.otozine.player.ui.components.Icon
+import net.otozine.player.ui.components.OtoIcon
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import net.otozine.player.ui.components.NeuCard
 import net.otozine.player.ui.components.Segmented
 import net.otozine.player.ui.components.SectionHeader
@@ -111,14 +115,14 @@ fun LibraryScreen(
             if (available.size > 1) {
                 Segmented(
                     options = available.map { candidate ->
-                        candidate to when (candidate) {
-                            Source.LIBRARY -> "DRIVE"
-                            Source.DEVICE -> "PHONE"
-                            Source.ONLINE -> "ONLINE"
+                        when (candidate) {
+                            Source.LIBRARY -> Triple(candidate, "DRIVE", Icon.DRIVE)
+                            Source.DEVICE -> Triple(candidate, "PHONE", Icon.PHONE)
+                            Source.ONLINE -> Triple(candidate, "ONLINE", Icon.SPARK)
                         }
                     },
                     selected = source,
-                    segmentWidth = 58.dp,
+                    segmentWidth = 74.dp,
                 ) {
                     chosen = it; openMood = null
                     selecting = false; selected = emptySet()
@@ -126,15 +130,18 @@ fun LibraryScreen(
             }
 
             Segmented(
-                options = listOf(GroupBy.MOOD to "MOOD", GroupBy.ALL to "ALL"),
+                options = listOf(
+                    Triple(GroupBy.MOOD, "", Icon.GRID),
+                    Triple(GroupBy.ALL, "", Icon.LIST),
+                ),
                 selected = groupBy,
-                segmentWidth = 46.dp,
+                segmentWidth = 40.dp,
             ) { groupBy = it; openMood = null }
 
             Box(Modifier.weight(1f))
 
             if (canCopy) {
-                Chip("COPY", selected = false) {
+                IconAction(Icon.COPY, "Copy songs to the drive") {
                     selecting = true; selected = emptySet()
                 }
             }
@@ -427,8 +434,10 @@ private fun FlatList(
                     color = Oto.colors.ink3,
                     modifier = Modifier.weight(1f),
                 )
-                Chip("PLAY ALL", selected = false) { viewModel.playList(tracks, shuffle = false) }
-                Chip("SHUFFLE", selected = true) { viewModel.playList(tracks, shuffle = true) }
+                IconAction(Icon.PLAY, "Play all") { viewModel.playList(tracks, shuffle = false) }
+                IconAction(Icon.SHUFFLE, "Shuffle", accent = true) {
+                    viewModel.playList(tracks, shuffle = true)
+                }
             }
         }
         items(tracks, key = { it.id }) { track ->
@@ -457,6 +466,28 @@ fun List<Track>.matching(query: String): List<Track> {
     val seen = HashSet<String>()
     return filter { it.displayTitle.lowercase().contains(needle) }
         .filter { seen.add(it.dedupeKey) }
+}
+
+@Composable
+fun IconAction(
+    icon: Icon,
+    contentDescription: String,
+    accent: Boolean = false,
+    onClick: () -> Unit,
+) {
+    val interaction = remember { MutableInteractionSource() }
+    Box(
+        Modifier
+            .pressable(interaction)
+            .size(40.dp)
+            .neu(if (accent) Depth.Raised else Depth.RaisedSoft, RoundedCornerShape(50))
+            .clip(RoundedCornerShape(50))
+            .clickable(interactionSource = interaction, indication = null, onClick = onClick)
+            .semantics { this.contentDescription = contentDescription },
+        contentAlignment = Alignment.Center,
+    ) {
+        OtoIcon(icon, tint = if (accent) Oto.colors.teal else Oto.colors.ink2, size = 17.dp)
+    }
 }
 
 @Composable

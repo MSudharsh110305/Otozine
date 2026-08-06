@@ -258,25 +258,31 @@ fun NowPlayingScreen(
             Modifier.fillMaxWidth().padding(bottom = 16.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
-            FooterAction("QUEUE", onQueue)
-            FooterAction("WHY", onWhy)
-            FooterAction("MOOD", onMood)
-            FooterAction("TIMER", onTimer)
+            FooterAction(Icon.LIST, "QUEUE", onQueue)
+            FooterAction(Icon.INFO, "WHY", onWhy)
+            FooterAction(Icon.SLIDERS, "MOOD", onMood)
+            FooterAction(Icon.CLOCK, "TIMER", onTimer)
         }
     }
     }
 }
 
 @Composable
-private fun FooterAction(label: String, onClick: () -> Unit) {
-    Box(
+private fun FooterAction(icon: Icon, label: String, onClick: () -> Unit) {
+    // Icon over label rather than beside it: four of these sit in a row across
+    // the width, and stacking keeps each one square enough to hit while leaving
+    // the word for the two that are not obvious from their shape alone.
+    Column(
         Modifier
-            .neu(Depth.RaisedSoft, RoundedCornerShape(50))
-            .clip(RoundedCornerShape(50))
+            .neu(Depth.RaisedSoft, RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(18.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 15.dp, vertical = 11.dp),
+            .padding(horizontal = 14.dp, vertical = 9.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        Text(label, style = Oto.type.micro, color = Oto.colors.ink2)
+        OtoIcon(icon, tint = Oto.colors.ink2, size = 17.dp)
+        Text(label, style = Oto.type.micro, color = Oto.colors.ink3)
     }
 }
 
