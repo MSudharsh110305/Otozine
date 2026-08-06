@@ -303,15 +303,19 @@ private fun BottomNav(selected: Tab, onSelect: (Tab) -> Unit) {
             .fillMaxWidth()
             .padding(horizontal = 14.dp, vertical = 8.dp)
             .neu(Depth.Raised, RoundedCornerShape(22.dp))
-            .padding(vertical = 9.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+            .padding(horizontal = 8.dp, vertical = 9.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
+        // Equal thirds. Spacing the tabs evenly left each one as wide as its
+        // own word, so the LIBRARY pill was noticeably fatter than PLAY and the
+        // selected marker changed size as you moved between them.
         Tab.entries.forEach { entry ->
             val active = entry == selected
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier
+                    .weight(1f)
                     .clip(RoundedCornerShape(16.dp))
                     .clickable { onSelect(entry) }
                     .let {
@@ -319,7 +323,7 @@ private fun BottomNav(selected: Tab, onSelect: (Tab) -> Unit) {
                         // highlighted -- depth is the state signal here.
                         if (active) it.neu(Depth.Inset, RoundedCornerShape(16.dp)) else it
                     }
-                    .padding(horizontal = 22.dp, vertical = 6.dp),
+                    .padding(vertical = 7.dp),
             ) {
                 OtoIcon(
                     entry.icon,

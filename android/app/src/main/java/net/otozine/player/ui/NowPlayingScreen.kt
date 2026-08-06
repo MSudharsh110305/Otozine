@@ -256,30 +256,39 @@ fun NowPlayingScreen(
 
         Row(
             Modifier.fillMaxWidth().padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            FooterAction(Icon.LIST, "QUEUE", onQueue)
-            FooterAction(Icon.INFO, "WHY", onWhy)
-            FooterAction(Icon.SLIDERS, "MOOD", onMood)
-            FooterAction(Icon.CLOCK, "TIMER", onTimer)
+            // Equal weights, not SpaceEvenly. Even spacing distributes the gaps
+            // between buttons that keep their own widths, so each one ended up
+            // as wide as its label -- WHY visibly narrower than QUEUE, four
+            // buttons of four sizes doing the same kind of job.
+            FooterAction(Icon.LIST, "QUEUE", Modifier.weight(1f), onQueue)
+            FooterAction(Icon.INFO, "WHY", Modifier.weight(1f), onWhy)
+            FooterAction(Icon.SLIDERS, "MOOD", Modifier.weight(1f), onMood)
+            FooterAction(Icon.CLOCK, "TIMER", Modifier.weight(1f), onTimer)
         }
     }
     }
 }
 
 @Composable
-private fun FooterAction(icon: Icon, label: String, onClick: () -> Unit) {
+private fun FooterAction(
+    icon: Icon,
+    label: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
     // Icon over label rather than beside it: four of these sit in a row across
     // the width, and stacking keeps each one square enough to hit while leaving
     // the word for the two that are not obvious from their shape alone.
     Column(
-        Modifier
+        modifier
             .neu(Depth.RaisedSoft, RoundedCornerShape(16.dp))
             .clip(RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 9.dp),
+            .padding(vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(3.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         OtoIcon(icon, tint = Oto.colors.ink2, size = 17.dp)
         Text(label, style = Oto.type.micro, color = Oto.colors.ink3)
