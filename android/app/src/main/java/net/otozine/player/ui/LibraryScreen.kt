@@ -44,6 +44,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import net.otozine.player.ui.components.ArtTile
 import androidx.compose.ui.platform.LocalDensity
+import net.otozine.player.ui.components.MoodSwatch
 import net.otozine.player.ui.components.NeuCard
 import net.otozine.player.ui.components.Segmented
 import net.otozine.player.ui.components.SectionHeader
@@ -358,7 +359,7 @@ private fun MoodTile(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Cover(tracks.firstOrNull(), viewModel)
+        MoodSwatch(label)
 
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
@@ -368,36 +369,17 @@ private fun MoodTile(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Text("${tracks.size} songs", style = Oto.type.micro, color = Oto.colors.ink3)
+            Text(
+                tracks.take(2).joinToString(" · ") { it.displayTitle } +
+                    if (tracks.size > 2) "  +${tracks.size - 2}" else "",
+                style = Oto.type.micro,
+                color = Oto.colors.ink3,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
         OtoIcon(Icon.CHEVRON, tint = Oto.colors.ink3, size = 14.dp)
     }
-}
-
-/**
- * The face of a mood: one cover.
- *
- * Three fanned behind each other was the first attempt, and it only worked
- * where every track had artwork. Most of this library has none, so it drew
- * three generated letter tiles overlapping by nine pixels -- an unreadable
- * smear, worse than showing nothing at all. One cover stays legible whether it
- * is real artwork or a generated tile, which is the only version that survives
- * the library this actually has.
- */
-@Composable
-private fun Cover(track: Track?, viewModel: PlayerViewModel) {
-    val artPx = with(LocalDensity.current) { 52.dp.roundToPx() }
-    if (track == null) {
-        Box(Modifier.size(46.dp))
-        return
-    }
-    ArtTile(
-        artKey = track.contentHash,
-        title = track.displayTitle,
-        bitmap = rememberArt(viewModel.artPathFor(track), artPx),
-        modifier = Modifier.size(46.dp),
-        radius = 12.dp,
-    )
 }
 
 @Composable
